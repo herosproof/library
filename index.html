@@ -602,6 +602,7 @@ const PICBOOKS={
   'lumi-lights':{
     folder:'lumi-lights',pageCount:61,
     pairFlip:false, /* left slot=even(text), right slot=odd(illustration) */
+    soloPages:[4],  /* page 4 = dedication — always shown alone, never paired */
     emoji:'🎃',
     titleEn:'Lumi Lights the Way',titleJp:'ルミがてらすみち',
     subEn:"Little Lumi's very first story — made for Halloween! 🎃",
@@ -775,75 +776,85 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
   const readerTitle=$('reader-title');
   const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const FALLBACK_MS=3200; /* pause length on pages with no recorded narration, when Auto is on */
+  const FALLBACK_MS=3200;
 
-  /* spreadMode: true=2 pages side-by-side; false=1 page full-width. Defaults to spread on
-     wide screens (≥700px) and single on phones. Toggle button switches at any time. */
+  /* spreadMode: true=spread (2 pages); false=single (1 page). Responsive default. */
   let spreadMode=(window.innerWidth>=700);
-  let cur=null,spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false;
+  let cur=null,curSpreads=[],spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false;
   let audio=null,autoTimer=null;
 
+  /* ── paths ──
+     IMAGES: assets/{folder}/page  (N).JPG  ← two spaces before the parenthesis
+     AUDIO:  assets/voice/{folder}/spread_NN.mp3
+       • One recording per text+illustration spread, numbered from 01.
+       • soloPages (cover, dedication) have audioTrack=0 = no recording needed.
+       • So if page 4 is a solo dedication: spread_01=pages2+3, spread_02=pages5+6, etc.
+       • Missing files fail silently; auto-advance timer fires after FALLBACK_MS instead.
+  */
   function pagePath(i){return ASSET+cur.folder+'/'+encodeURIComponent('page  ('+(i+1)+').JPG');}
-  function voicePath(s){const n=String(s).padStart(2,'0');return ASSET+'voice/'+cur.folder+'/spread_'+n+'.mp3';}
-  /* ── AUDIO NAMING: record one file per text+illustration spread, numbered from 01.
-       assets/voice/lumi-lights/spread_01.mp3 … spread_30.mp3
-       assets/voice/candy-cats/spread_01.mp3  … spread_08.mp3
-     Spread 0 is always the cover — no audio needed. Missing files auto-advance. ── */
-  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
-  window.stopPicBookAudio=stopAudio;
+  function voicePath(track){const n=String(track).padStart(2,'0');return ASSET+'voice/'+cur.folder+'/spread_'+n+'.mp3';}
 
-  /* ── spread helpers ── */
-  function totalSpreads(){return 1+Math.ceil((cur.pageCount-1)/2);}
-  /* Returns 1-based page numbers {left, right} for a spread index.
-     Spread 0 = cover alone (left:null, right:1).
-     pairFlip:false → left=even(text), right=odd(illustration) — Lumi Lights the Way
-     pairFlip:true  → left=odd(text),  right=even(illustration) — Candy Cats (current filenames) */
-  function getPagesForSpread(s){
-    if(s===0)return{left:null,right:1};
-    const k=s;
-    let lp=2*k, rp=2*k+1;
-    if(cur.pairFlip){lp=2*k+1; rp=2*k;}
-    if(lp>cur.pageCount)lp=null;
-    if(rp>cur.pageCount)rp=null;
-    return{left:lp,right:rp};
+  /* ── buildSpreads ──
+     Constructs the ordered list of spreads for the current book.
+     soloPages: page numbers always shown alone (centered), not paired with a neighbour.
+     Pages in a normal spread appear in reading order: lower number = left slot.
+     audioTrack 0 = no narration (cover / solo page).
+     audioTrack 1,2,3... = spread_01.mp3, spread_02.mp3 … (numbered without gaps,
+     skipping solo pages so the user's recording numbers stay consecutive).
+  */
+  function buildSpreads(book){
+    const solos=new Set(book.soloPages||[]);
+    const out=[{left:null,right:1,solo:true,audioTrack:0}]; // cover always solo
+    let p=2,track=1;
+    while(p<=book.pageCount){
+      if(solos.has(p)){
+        out.push({left:null,right:p,solo:true,audioTrack:0});
+        p++;
+      } else {
+        const r=(p+1<=book.pageCount)?p+1:null;
+        out.push({left:p,right:r,solo:false,audioTrack:track++});
+        p+=2;
+      }
+    }
+    return out;
   }
-  /* Is single-page index p a text (narrated) page? Cover (p=1) is illustration. */
-  function isTextPage(p){return p>1&&(cur.pairFlip?p%2===1:p%2===0);}
-  /* Which spread does single-page index p belong to? (used to pick the right audio file) */
-  function pageToSpread(p){return p===1?0:Math.ceil(p/(2));}
+
   function setSlot(slot,imgEl,pageNum){
     if(!pageNum){slot.classList.add('hidden');return;}
-    slot.classList.remove('hidden');
-    imgEl.src=pagePath(pageNum-1);imgEl.alt='Page '+pageNum;
+    slot.classList.remove('hidden');imgEl.src=pagePath(pageNum-1);imgEl.alt='Page '+pageNum;
   }
-
+  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
+  window.stopPicBookAudio=stopAudio;
   function armAuto(ms){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),ms/speed);}
-  /* s = spread index. 0 = cover (no audio, just arm timer if auto). 1+ = play spread_NN.mp3 */
-  function playNarration(s){
-    if(!s){if(auto)armAuto(FALLBACK_MS);return;}
+  /* track 0 = no audio (cover/solo) — arm auto timer only. 1+ = play spread_NN.mp3 */
+  function playNarration(track){
+    if(!track){if(auto)armAuto(FALLBACK_MS);return;}
     stopAudio();
-    audio=new Audio(voicePath(s));
-    audio.playbackRate=speed;
+    audio=new Audio(voicePath(track));audio.playbackRate=speed;
     audio.onended=()=>{if(auto)advance();};
     audio.onerror=()=>{audio=null;if(auto)armAuto(FALLBACK_MS);};
     audio.play().catch(()=>{audio=null;if(auto)armAuto(FALLBACK_MS);});
   }
 
+  /* ── spread mode ── */
   function showPage(s,autoplay){
-    spreadIdx=Math.max(0,Math.min(totalSpreads()-1,s));
-    const{left,right}=getPagesForSpread(spreadIdx);
-    const isCover=(spreadIdx===0);
-    setSlot(leftSlot,leftImg,left);
-    setSlot(rightSlot,rightImg,right);
-    spineEl.style.display=(left&&right)?'':'none';
-    const nums=[left,right].filter(Boolean);
-    counterEl.textContent=isCover?'COVER · 1':'PAGES '+nums.join('-')+' / '+cur.pageCount;
-    bar.style.width=((spreadIdx+1)/totalSpreads()*100)+'%';
+    spreadIdx=Math.max(0,Math.min(curSpreads.length-1,s));
+    const sp=curSpreads[spreadIdx];
+    setSlot(leftSlot,leftImg,sp.left);setSlot(rightSlot,rightImg,sp.right);
+    spineEl.style.display=(sp.left&&sp.right)?'':'none';
+    const nums=[sp.left,sp.right].filter(Boolean);
+    counterEl.textContent=spreadIdx===0?'COVER':
+      sp.solo?'PAGE '+nums[0]+' / '+cur.pageCount:
+      'PAGES '+nums.join('-')+' / '+cur.pageCount;
+    bar.style.width=((spreadIdx+1)/curSpreads.length*100)+'%';
     prevBtn.classList.toggle('off',spreadIdx===0);
-    fwdBtn.classList.toggle('off',spreadIdx>=totalSpreads()-1);
-    if(started&&autoplay!==false)playNarration(spreadIdx); /* 0=cover(silent), 1+=spread_NN.mp3 */
+    fwdBtn.classList.toggle('off',spreadIdx>=curSpreads.length-1);
+    if(started&&autoplay!==false)playNarration(sp.audioTrack);
   }
-  /* ── single page mode: one page full-width, advance page-by-page ── */
+
+  /* ── single page mode ──
+     Narrates when on the LEFT (first/lower) page of a spread; silent on right (illustration).
+     Solo pages have audioTrack 0 so they auto-pause then advance. */
   function showSinglePage(p,autoplay){
     singlePageIdx=Math.max(1,Math.min(cur.pageCount,p));
     leftSlot.classList.add('hidden');spineEl.style.display='none';
@@ -853,15 +864,16 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     bar.style.width=(singlePageIdx/cur.pageCount*100)+'%';
     prevBtn.classList.toggle('off',singlePageIdx===1);
     fwdBtn.classList.toggle('off',singlePageIdx>=cur.pageCount);
-    /* narrate only text pages; illustrations and cover use fallback timer */
-    const s=isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
-    if(started&&autoplay!==false)playNarration(s);
+    const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);
+    const sp=si>=0?curSpreads[si]:null;
+    const track=(sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0;
+    if(started&&autoplay!==false)playNarration(track);
   }
 
   function advance(){
     if(!started)return;
     if(spreadMode){
-      if(spreadIdx>=totalSpreads()-1){stopAudio();endPanel.classList.add('show');return;}
+      if(spreadIdx>=curSpreads.length-1){stopAudio();endPanel.classList.add('show');return;}
       showPage(spreadIdx+1);
     } else {
       if(singlePageIdx>=cur.pageCount){stopAudio();endPanel.classList.add('show');return;}
@@ -890,7 +902,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     stopAudio();if(window.stopBookAudio)stopBookAudio();
     document.getElementById('book').style.display='none';pbookEl.style.display='';
     document.getElementById('level-row').style.display='none';
-    cur=PICBOOKS[key];spreadIdx=0;singlePageIdx=1;started=false;
+    cur=PICBOOKS[key];curSpreads=buildSpreads(cur);spreadIdx=0;singlePageIdx=1;started=false;
     setOverlayCover(pagePath(0),cur.emoji);
     ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
     ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
@@ -904,13 +916,10 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   }
   window.loadPicBook=loadPicBook;
 
-  /* page interactions */
   stage.addEventListener('click',()=>{if(!started)return;advance();});
   stage.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
-
   prevBtn.addEventListener('click',e=>{e.stopPropagation();back();});
   fwdBtn.addEventListener('click',e=>{e.stopPropagation();advance();});
-
   $('pbk-start').addEventListener('click',restart);
   $('pbk-restart').addEventListener('click',e=>{e.stopPropagation();restart();});
   $('pbk-replay').addEventListener('click',restart);
@@ -921,14 +930,16 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
 
   narrateBtn.addEventListener('click',e=>{
     e.stopPropagation();if(!started)return;
-    const s=spreadMode?spreadIdx:isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
-    playNarration(s);
+    if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
+    else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
   });
   autoBtn.addEventListener('click',e=>{
     e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
     if(auto&&started){
-      const s=spreadMode?spreadIdx:isTextPage(singlePageIdx)?pageToSpread(singlePageIdx):0;
-      if(!audio||audio.ended)playNarration(s);else audio.onended=()=>{if(auto)advance();};
+      let track=0;
+      if(spreadMode){track=curSpreads[spreadIdx].audioTrack;}
+      else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;track=(sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0;}
+      if(!audio||audio.ended)playNarration(track);else audio.onended=()=>{if(auto)advance();};
     } else clearTimeout(autoTimer);
   });
   viewBtn.addEventListener('click',e=>{
@@ -941,14 +952,12 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);pbookEl.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
   });
 
-  /* picture-book shelf cards */
   document.querySelectorAll('.side-card[data-picbook]').forEach(c=>{
     const go=()=>{loadPicBook(c.dataset.picbook,true);pbookEl.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
     c.addEventListener('click',go);
     c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
   });
 
-  /* fullscreen / theater */
   function theaterOn(){pbookEl.classList.add('theater','big');document.body.classList.add('no-scroll');}
   function theaterOff(){pbookEl.classList.remove('theater','big');document.body.classList.remove('no-scroll');}
   function toggleFS(){
@@ -968,7 +977,6 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
     else if(e.key==='Escape'&&pbookEl.classList.contains('theater'))theaterOff();
   });
-  /* set initial toggle label to match the responsive default */
   viewBtn.textContent=spreadMode?'📄 Single':'📖 Spread';
   viewBtn.title=spreadMode?'Single page view / 1ページ表示':'Spread view / 見開き表示';
 })();
