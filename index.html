@@ -291,13 +291,12 @@ footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgb
     <div class="pbook" id="pbook" style="display:none">
       <div class="book-top">
         <span class="book-counter" id="pbk-counter"></span>
-        <button class="pbtn" id="pbk-narrate" title="Play narration / 読(よ)み上(あ)げ">🔊 Narrate</button>
-        <button class="pbtn" id="pbk-replay" title="Replay narration / もう一度">🔁 Replay</button>
+        <button class="pbtn" id="pbk-mute" title="Mute / ミュート">🔊</button>
+        <button class="pbtn" id="pbk-replay" title="Replay narration / もう一度">🔁</button>
         <button class="pbtn" id="pbk-auto" title="Auto-advance / 自動再生">▶ Auto</button>
         <button class="pbtn" id="pbk-view" title="Spread view / 見開き表示">📖 Spread</button>
         <span class="book-speed" aria-label="Narration speed">
           <span class="lab">🔊</span>
-          <button data-rate="0.75">0.75×</button>
           <button data-rate="0.9">0.9×</button>
           <button class="active" data-rate="1">1×</button>
           <button data-rate="1.1">1.1×</button>
@@ -644,7 +643,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let cur=STORIES.prologue,idx=0,level='easy',jpOn=false,speed=1,auto=false,started=false;
-  let audio=null,autoTimer=null;
+  let audio=null,autoTimer=null,muted=false;
   const N=()=>cur.beats.length;
   const pad=n=>String(n+1).padStart(2,'0');
 
@@ -773,7 +772,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   const leftSlot=$('pbk-left'),rightSlot=$('pbk-right'),spineEl=$('pbk-spine');
   const leftImg=$('pbk-img-left'),rightImg=$('pbk-img-right');
   const counterEl=$('pbk-counter'),bar=$('pbk-bar');
-  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),narrateBtn=$('pbk-narrate'),replayBtn=$('pbk-replay'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
+  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),muteBtn=$('pbk-mute'),replayBtn=$('pbk-replay'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
   const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
   const readerTitle=$('reader-title');
   const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -781,7 +780,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
 
   /* spreadMode: true=spread (2 pages); false=single (1 page). Responsive default. */
   let spreadMode=(window.innerWidth>=700);
-  let cur=null,curSpreads=[],spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false;
+  let cur=null,curSpreads=[],spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false,muted=false;
   let audio=null,autoTimer=null;
 
   /* ── paths ──
@@ -844,7 +843,7 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   function playNarration(track){
     if(!track){if(auto)armAuto(FALLBACK_MS);return;}
     stopAudio();
-    audio=new Audio(voicePath(track));audio.playbackRate=speed;
+    audio=new Audio(voicePath(track));audio.volume=muted?0:1;audio.playbackRate=speed;
     audio.onended=()=>{if(auto)advance();};
     audio.onerror=()=>{audio=null;if(auto)armAuto(FALLBACK_MS);};
     audio.play().catch(()=>{audio=null;if(auto)armAuto(FALLBACK_MS);});
@@ -930,7 +929,15 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
   }
   window.loadPicBook=loadPicBook;
 
-  stage.addEventListener('click',()=>{if(!started)return;advance();});
+  /* spread navigation: click left page = back, click right page = forward */
+  leftSlot.addEventListener('click',e=>{e.stopPropagation();if(spreadMode&&started)back();});
+  rightSlot.addEventListener('click',e=>{e.stopPropagation();if(spreadMode&&started)advance();});
+
+  /* page navigation in spread mode: left page = back, right page = forward */
+  leftSlot.addEventListener('click',()=>{if(!started||!spreadMode)return;back();});
+  rightSlot.addEventListener('click',()=>{if(!started)return;if(spreadMode)advance();else advance();});
+  /* single page or stage: tap anywhere to advance */
+  stage.addEventListener('click',()=>{if(!started)return;if(!spreadMode)advance();});
   stage.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
   prevBtn.addEventListener('click',e=>{e.stopPropagation();back();});
   fwdBtn.addEventListener('click',e=>{e.stopPropagation();advance();});
@@ -942,15 +949,15 @@ setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1)
     theaterOff();document.getElementById('story-shelf-gaiden').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
   });
 
-  narrateBtn.addEventListener('click',e=>{
-    e.stopPropagation();if(!started)return;
-    if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
-    else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
-  });
   replayBtn.addEventListener('click',e=>{
     e.stopPropagation();if(!started)return;
     if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
     else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
+  });
+  muteBtn.addEventListener('click',e=>{
+    e.stopPropagation();muted=!muted;
+    muteBtn.classList.toggle('on',muted);muteBtn.textContent=muted?'🔇 Unmute':'🔊 Mute';
+    if(audio)audio.volume=muted?0:1;
   });
   autoBtn.addEventListener('click',e=>{
     e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
