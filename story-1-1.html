@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="favicon.png">
+<title>Library · 図書室 — Hero's Proof</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Fredoka:wght@400;500;600;700&family=Zen+Maru+Gothic:wght@400;500;700;900&family=Kosugi+Maru&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#3a2558;--bg2:#2a1845;--panel2:#1e1235;
+  --cream:#f5eedc;--card-bg:rgba(245,238,220,0.97);--border-gold:rgba(245,158,11,0.25);
+  --purple:#9060c0;--purple-light:#c8a0e0;--purple-pale:#ede0f8;--purple-dark:#4a3870;
+  --gold:#c9a030;--gold-light:#f0d060;--gold-pale:#f8f0c0;
+  --brown:#5c2810;--text-dark:#1e1235;--text-soft:#3a2558;--text-muted:rgba(200,160,224,.78);
+  --green:#4a9040;--red:#c83030;--sky:#2858b8;--shadow:rgba(0,0,0,0.4);
+  --paper:#efe3c6;--paper-2:#e7d8b5;--paper-edge:#d8c69c;
+  --ink:#352714;--ink-soft:#6a543a;--gold-deep:#8a6712;--gold-deep2:#735410;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{scroll-behavior:smooth;}
+body{font-family:'Fredoka','Kosugi Maru','Zen Maru Gothic',sans-serif;background:var(--bg);color:var(--cream);min-height:100vh;overflow-x:hidden;}
+body.no-scroll{overflow:hidden;}
+button{font-family:inherit;cursor:pointer;}
+a{color:inherit;}
+:focus-visible{outline:3px solid var(--gold-light);outline-offset:2px;border-radius:6px;}
+ruby{ruby-position:over;}
+ruby rt{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.52em;color:var(--gold-deep);font-weight:600;line-height:1;}
+
+.starfield{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.starfield span{position:absolute;animation:twinkle var(--d,3s) ease-in-out infinite var(--delay,0s);display:flex;align-items:center;justify-content:center;font-size:var(--sz,1rem);color:var(--col,#fde68a);text-shadow:0 0 6px var(--col,#fde68a);line-height:1;}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}50%{opacity:.9;transform:scale(1) rotate(20deg)}}
+
+.page{position:relative;z-index:1;max-width:880px;margin:0 auto;padding:0 16px 80px;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:18px 0 6px;}
+.back-link{display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:.92rem;font-weight:600;color:var(--purple-light);background:rgba(20,12,38,.5);border:1px solid rgba(201,160,48,.3);padding:9px 16px;border-radius:30px;transition:background .2s;}
+.back-link:hover{background:rgba(74,56,112,.7);}
+
+.story-header{text-align:center;padding:18px 0 26px;position:relative;transition:opacity .2s;}
+.story-header:hover{opacity:.85;}
+.story-header::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:220px;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.hp-logo{max-height:96px;max-width:80%;object-fit:contain;display:block;margin:0 auto 12px;filter:drop-shadow(0 2px 14px rgba(167,139,250,.5));}
+.story-eyebrow{font-family:'Press Start 2P',monospace;font-size:clamp(.42rem,1.9vw,.58rem);color:var(--gold-light);letter-spacing:.18em;opacity:.75;margin-bottom:14px;text-shadow:0 0 20px rgba(240,208,96,.4);}
+.story-title{font-family:'Press Start 2P',monospace;font-size:clamp(1.05rem,4.2vw,1.65rem);color:#fff;line-height:1.5;text-shadow:0 0 36px rgba(200,160,224,.55),0 0 70px rgba(144,96,192,.3);}
+.story-title .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(1.05rem,3.1vw,1.5rem);color:var(--gold-light);letter-spacing:.2em;margin-top:10px;text-shadow:0 0 20px rgba(240,208,96,.4);}
+
+.tabs{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:28px 0 24px;}
+.tab{background:rgba(20,12,38,.5);border:1px solid rgba(201,160,48,.3);color:var(--purple-light);border-radius:30px;padding:12px 22px;font-size:.98rem;font-weight:600;line-height:1.2;transition:background .2s,color .2s,border-color .2s,transform .15s;}
+.tab .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.82rem;opacity:.8;margin-left:5px;}
+.tab:hover{background:rgba(74,56,112,.7);}
+.tab:active{transform:scale(.97);}
+.tab.active{background:linear-gradient(135deg,var(--purple-dark),var(--purple));color:#fff;border-color:var(--gold-light);box-shadow:0 0 18px rgba(144,96,192,.4);}
+.panel{display:none;animation:fadeUp .4s ease;}
+.panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.reader-title{text-align:center;font-size:clamp(1rem,3vw,1.32rem);font-weight:700;color:#fff;line-height:1.3;margin-bottom:14px;}
+.reader-title .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.86rem,2.4vw,1.05rem);color:var(--gold-light);margin-top:3px;}
+
+.beat-img{display:block;max-width:min(420px,86%);margin:14px auto;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.25);border:1px solid rgba(201,160,48,.25);}
+.beat-img.hidden{display:none;}
+
+/* ════════════ STORYBOOK ════════════ */
+.book{position:relative;width:100%;background:linear-gradient(158deg,var(--paper) 0%,var(--paper-2) 100%);border:1px solid var(--paper-edge);border-radius:20px;box-shadow:0 10px 44px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.55);padding:14px 16px 18px;overflow:hidden;}
+.book::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:20px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,255,255,.4),transparent 60%);}
+.book:fullscreen,.book.theater{border-radius:0;padding:24px;}
+.book.theater{position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;display:flex;flex-direction:column;}
+.book.big .book-text{font-size:clamp(1.5rem,3.6vmin,2.5rem);}
+.book.big .book-jp{font-size:clamp(1.15rem,2.6vmin,1.7rem);}
+.book.big .book-page{flex:1;height:auto;}
+
+.book-top{position:relative;z-index:3;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.book-counter{font-family:'Press Start 2P',monospace;font-size:.5rem;color:var(--gold-deep2);letter-spacing:.1em;margin-right:auto;}
+.pbtn{background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.45);color:var(--ink);border-radius:10px;padding:8px 13px;font-size:.82rem;font-weight:600;letter-spacing:.02em;line-height:1.2;transition:background .2s,transform .15s;}
+.pbtn:hover{background:rgba(255,255,255,.8);}
+.pbtn:active{transform:scale(.95);}
+.pbtn.on{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border-color:var(--gold-deep2);color:#fff7e0;}
+.book-speed{display:inline-flex;gap:4px;align-items:center;}
+.book-speed .lab{font-size:.86rem;color:var(--gold-deep2);}
+.book-speed button{background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.4);color:var(--ink);border-radius:18px;padding:6px 11px;font-size:.8rem;font-weight:600;transition:background .2s,transform .12s;}
+.book-speed button.active{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border-color:var(--gold-deep2);color:#fff7e0;}
+.book-speed button:active{transform:scale(.93);}
+
+.book-progress{position:relative;z-index:3;height:6px;background:rgba(138,103,18,.18);border-radius:6px;overflow:hidden;margin-bottom:14px;}
+.book-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold-deep),var(--gold));transition:width .4s ease;}
+
+.book-page{position:relative;z-index:2;height:clamp(220px,34vh,330px);overflow-y:auto;cursor:pointer;padding:14px 6px;scrollbar-width:thin;scrollbar-color:rgba(138,103,18,.4) transparent;}
+.book-page::-webkit-scrollbar{width:8px;}
+.book-page::-webkit-scrollbar-thumb{background:rgba(138,103,18,.4);border-radius:8px;}
+.book-text{font-family:'Fredoka',sans-serif;font-size:clamp(1.25rem,3.6vw,1.85rem);line-height:2.05;color:var(--ink-soft);text-align:left;letter-spacing:.005em;}
+.sentence{transition:filter .45s ease,opacity .45s ease,color .3s;}
+.sentence.seen{opacity:.5;filter:blur(1.4px);}
+.sentence:not(.active):not(.seen){opacity:.32;filter:blur(2.6px);}
+.sentence.active{opacity:1;filter:none;color:var(--ink);font-weight:600;background:rgba(201,160,48,.2);-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:5px;padding:.04em .12em;}
+.sentence .vocab{display:inline;background:none;border:none;padding:0;font:inherit;cursor:pointer;color:var(--gold-deep);font-weight:700;border-bottom:2px dotted var(--gold-deep);}
+.sentence.active .vocab:hover{color:var(--gold-deep2);background:rgba(138,103,18,.16);border-radius:4px;}
+
+.book-jp{position:relative;z-index:3;margin-top:12px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.98rem,2.7vw,1.25rem);color:var(--ink);line-height:1.95;background:rgba(255,255,255,.45);border:1px solid rgba(138,103,18,.3);border-radius:12px;padding:11px 15px;display:none;}
+.book-jp.show{display:block;animation:fadeUp .3s ease;}
+.book-jp .tag{font-family:'Fredoka',sans-serif;font-size:.74rem;font-weight:700;color:var(--gold-deep2);letter-spacing:.08em;display:block;margin-bottom:3px;}
+
+.book-gloss{position:relative;z-index:3;margin-top:10px;background:linear-gradient(135deg,#fff8e6,#f3e6c4);border:1px solid var(--gold-deep);border-radius:12px;padding:11px 15px;display:none;align-items:baseline;gap:12px;flex-wrap:wrap;}
+.book-gloss.show{display:flex;animation:fadeUp .25s ease;}
+.book-gloss .w{font-weight:700;color:var(--gold-deep2);font-size:1.2rem;}
+.book-gloss .g{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:1.05rem;color:var(--ink);}
+
+.book-nav{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:46px;height:62px;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid rgba(138,103,18,.45);color:var(--gold-deep2);font-size:1.5rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .2s,opacity .25s;}
+.book-nav:hover{background:#fff;}
+.book-nav.off{opacity:0;pointer-events:none;}
+.book-prev{left:8px;} .book-fwd{right:8px;}
+/* text-reader nav row: arrows sit below the text, next to the JP box (no overlap with sentences) */
+.book-nav-row{position:relative;z-index:3;display:flex;justify-content:space-between;gap:10px;margin:10px 0 4px;}
+.book-nav-row .book-nav{position:static;transform:none;width:auto;min-width:96px;height:44px;font-size:1rem;padding:0 18px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-weight:700;}
+.book-nav-row .book-nav.off{opacity:.25;pointer-events:none;}
+
+.book-overlay,.book-end{position:absolute;inset:0;z-index:20;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;padding:24px;background:linear-gradient(158deg,rgba(239,227,198,.97),rgba(220,201,160,.97));transition:opacity .5s;}
+.book-end{z-index:18;display:none;}
+.book-end.show{display:flex;animation:fadeUp .5s ease;}
+.book-overlay.fade{opacity:0;pointer-events:none;}
+.ov-emoji{font-size:3.4rem;animation:bob 3s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.ov-title{font-family:'Press Start 2P',monospace;font-size:clamp(.58rem,2.5vw,.82rem);color:var(--gold-deep2);line-height:2;}
+.ov-sub{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:clamp(.92rem,2.5vw,1.1rem);color:var(--ink);line-height:1.8;}
+.start-btn{background:linear-gradient(135deg,var(--gold-deep),var(--gold));border:none;border-radius:30px;padding:15px 38px;font-family:'Press Start 2P',monospace;font-size:clamp(.56rem,2.2vw,.72rem);color:#fff7e0;letter-spacing:.08em;box-shadow:0 5px 20px rgba(138,103,18,.45);transition:transform .2s,box-shadow .2s;}
+.start-btn:hover{transform:translateY(-3px);box-shadow:0 9px 28px rgba(138,103,18,.55);}
+.start-btn:active{transform:translateY(1px);}
+.book-end-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+
+.reader-hint{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--text-muted);margin-top:14px;line-height:1.8;}
+.reader-hint b{color:var(--gold-light);}
+
+.shelf-heading{font-family:'Press Start 2P',monospace;font-size:clamp(.56rem,2.1vw,.74rem);color:var(--gold-light);text-align:center;letter-spacing:.12em;margin:50px 0 18px;text-shadow:0 0 16px rgba(240,208,96,.4),2px 2px 0 var(--brown);}
+.shelf-heading .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:1rem;color:var(--purple-light);margin-top:5px;font-weight:700;text-shadow:none;}
+.shelf{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+.side-card{display:flex;gap:15px;text-decoration:none;color:var(--text-dark);background:var(--card-bg);border:1px solid var(--border-gold);border-radius:18px;padding:17px;box-shadow:0 4px 20px var(--shadow);transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s;text-align:left;}
+.side-card:hover{transform:translateY(-6px);box-shadow:0 12px 32px rgba(0,0,0,.45);}
+.side-cover{flex:0 0 90px;height:116px;border-radius:10px;object-fit:cover;background:linear-gradient(160deg,#5a3a8a,#2a1845);display:flex;align-items:center;justify-content:center;font-size:2.6rem;border:1px solid rgba(201,160,48,.4);}
+.side-body h4{font-size:1.12rem;font-weight:700;color:var(--text-dark);line-height:1.3;}
+.side-body h4 .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-soft);margin-top:2px;}
+.side-body p{font-size:.88rem;color:var(--text-soft);line-height:1.6;margin-top:7px;}
+.side-pill{display:inline-block;margin-top:9px;font-size:.72rem;font-weight:700;background:rgba(144,96,192,.16);color:#7a4ca8;border:1px solid rgba(144,96,192,.35);border-radius:20px;padding:3px 11px;}
+.side-soon{opacity:.72;cursor:default;}
+.side-soon:hover{transform:none;box-shadow:0 4px 20px var(--shadow);}
+.side-now{outline:2px solid var(--gold-light);outline-offset:2px;}
+/* Story Mode call-to-action card (points readers to the main adventure) */
+.side-go{border-color:rgba(201,160,48,.55);cursor:pointer;}
+.side-go .side-cover{background:linear-gradient(160deg,#9060c0,#4a3870);}
+.side-go .side-pill{background:linear-gradient(135deg,var(--gold-deep),var(--gold));color:#fff7e0;border-color:rgba(138,103,18,.6);}
+/* Recipe card cover accent */
+.side-recipe .side-cover{background:linear-gradient(160deg,#e0a850,#8a5a12);}
+
+/* ════════════ PICTURE BOOK READER ════════════ */
+.pbook{position:relative;width:100%;background:linear-gradient(158deg,var(--paper) 0%,var(--paper-2) 100%);border:1px solid var(--paper-edge);border-radius:20px;box-shadow:0 10px 44px rgba(0,0,0,.5),inset 0 2px 0 rgba(255,255,255,.55);padding:14px 16px 18px;overflow:hidden;}
+.pbook::before{content:'';position:absolute;inset:0;pointer-events:none;border-radius:20px;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(255,255,255,.4),transparent 60%);}
+.pbook:fullscreen,.pbook.theater{border-radius:0;padding:24px;}
+.pbook.theater{position:fixed;inset:0;z-index:1000;width:100vw;height:100vh;display:flex;flex-direction:column;}
+.pbook.big .pbook-stage{flex:1;height:auto;}
+.pbook-stage{position:relative;z-index:2;height:clamp(320px,62vh,640px);display:flex;align-items:center;justify-content:center;border-radius:14px;overflow:hidden;background:rgba(0,0,0,.14);cursor:pointer;}
+.pbook-img{max-width:100%;max-height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none;}
+/* ── spread slots ── */
+.pbk-slot{flex:1;display:flex;align-items:center;justify-content:center;height:100%;overflow:hidden;}
+.pbk-slot.hidden{display:none!important;}
+.pbk-spine{flex:0 0 1px;height:80%;background:rgba(138,103,18,.28);align-self:center;pointer-events:none;}
+.pbook-cover-img{width:min(220px,62%);border-radius:12px;display:block;margin:0 auto;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid rgba(138,103,18,.3);}
+.pbook-pdf-link{display:inline-block;margin-top:4px;font-size:.82rem;color:var(--gold-deep2);text-decoration:underline;opacity:.85;}
+
+/* ════════════ SHELF COVER IMAGES ════════════ */
+.side-cover img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
+.shelf-sub{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple-light);line-height:1.75;margin:-8px 0 18px;}
+
+.npc-note{background:#e8d7c3;border:1px dashed rgba(138,103,18,.45);border-radius:16px;padding:20px;margin-top:22px;text-align:center;transition:border-color .2s,background .2s;}
+.npc-note:hover{background:rgba(245,238,220,.97);border-color:rgba(138,103,18,.7);}
+.npc-note .em{font-size:1.8rem;letter-spacing:.2em;display:block;margin-bottom:9px;}
+.npc-note p{font-size:.96rem;color:var(--text-soft);line-height:1.75;}
+.npc-note .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;color:rgba(70,48,30,.82);}
+
+.notes-intro{text-align:center;color:var(--purple-light);font-size:1rem;line-height:1.8;margin-bottom:26px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;}
+.note-card{background:var(--card-bg);border:1px solid var(--border-gold);border-radius:18px;padding:20px 22px;margin-bottom:15px;color:var(--text-dark);box-shadow:0 4px 20px var(--shadow);}
+.note-card h3{font-size:1.2rem;color:var(--text-dark);margin-bottom:5px;}
+.note-card h3 .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.92rem;color:var(--purple);margin-left:6px;font-weight:600;}
+.note-card .sub{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-soft);margin-bottom:13px;}
+.ex{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0;}
+.ex code{background:rgba(144,96,192,.12);border:1px solid rgba(144,96,192,.3);border-radius:8px;padding:6px 11px;font-family:'Fredoka',monospace;font-size:.96rem;color:#5a3a8a;font-weight:600;}
+.ex code b{color:var(--red);}
+.note-card p{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.94rem;color:var(--text-soft);line-height:1.85;}
+.note-card .lead{font-weight:700;color:var(--text-dark);}
+.vocab-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:11px;margin-top:10px;}
+.vchip{background:rgba(138,103,18,.07);border:1px solid rgba(138,103,18,.28);border-radius:12px;padding:11px 13px;}
+.vchip .en{font-weight:700;color:var(--gold-deep2);font-size:1.08rem;}
+.vchip .kana{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.82rem;color:var(--purple);margin-top:2px;}
+.vchip .ja{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.9rem;color:var(--text-dark);margin-top:2px;}
+.study-teaser{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.86rem;color:var(--text-muted);margin-top:18px;line-height:1.7;}
+
+/* ════════════ RECIPE MODAL ════════════ */
+body.no-scroll{overflow:hidden;}
+.recipe-modal{position:fixed;inset:0;z-index:2000;display:none;padding:18px;overflow-y:auto;background:rgba(20,12,38,.72);backdrop-filter:blur(4px);}
+.recipe-modal.show{display:block;animation:fadeUp .3s ease;}
+.recipe-sheet{position:relative;max-width:720px;margin:22px auto;background:linear-gradient(158deg,var(--paper) 0%,var(--paper-2) 100%);border:1px solid var(--paper-edge);border-radius:20px;box-shadow:0 14px 50px rgba(0,0,0,.6),inset 0 2px 0 rgba(255,255,255,.55);padding:24px 22px 30px;color:var(--ink);}
+.recipe-close{position:sticky;top:0;float:right;margin:-4px -4px 0 12px;background:rgba(255,255,255,.65);border:1px solid rgba(138,103,18,.45);color:var(--gold-deep2);border-radius:12px;width:40px;height:40px;font-size:1.4rem;font-weight:700;line-height:1;cursor:pointer;z-index:3;transition:background .2s;}
+.recipe-close:hover{background:#fff;}
+.recipe-title{font-family:'Press Start 2P',monospace;font-size:clamp(.66rem,2.5vw,.9rem);color:var(--gold-deep2);line-height:1.9;text-align:center;margin-bottom:6px;}
+.recipe-title .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:1.05rem;color:var(--ink);margin-top:8px;letter-spacing:.05em;}
+.recipe-intro{text-align:center;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.93rem;color:var(--ink-soft);line-height:1.85;margin:0 auto 6px;max-width:560px;}
+.recipe-intro b{color:var(--gold-deep2);}
+.recipe-sec{background:rgba(255,255,255,.4);border:1px solid rgba(138,103,18,.3);border-radius:16px;padding:16px 16px 18px;margin-top:18px;}
+.recipe-sec-head{font-family:'Fredoka',sans-serif;font-weight:700;font-size:1.18rem;color:var(--gold-deep2);line-height:1.4;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+.recipe-sec-head .jp{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.95rem;color:var(--ink);}
+.recipe-sec-note{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.85rem;color:var(--ink-soft);margin:5px 0 8px;line-height:1.75;}
+.recipe-sub{font-family:'Fredoka',sans-serif;font-weight:700;font-size:.96rem;color:var(--gold-deep);margin:15px 0 6px;letter-spacing:.02em;}
+.recipe-table{width:100%;border-collapse:collapse;font-size:.9rem;}
+.recipe-table th,.recipe-table td{text-align:left;padding:7px 8px;border-bottom:1px solid rgba(138,103,18,.2);vertical-align:top;line-height:1.5;}
+.recipe-table th{font-family:'Fredoka',sans-serif;font-size:.74rem;letter-spacing:.04em;color:var(--gold-deep2);text-transform:uppercase;border-bottom:1.5px solid rgba(138,103,18,.4);}
+.recipe-table td:last-child{font-weight:600;color:var(--ink);}
+.recipe-table .en{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;color:var(--ink-soft);font-size:.82rem;}
+.recipe-steps{list-style:none;counter-reset:step;padding:0;margin:4px 0 0;}
+.recipe-steps li{position:relative;padding:9px 0 9px 40px;border-bottom:1px solid rgba(138,103,18,.16);line-height:1.65;}
+.recipe-steps li:last-child{border-bottom:none;}
+.recipe-steps li::before{counter-increment:step;content:counter(step);position:absolute;left:0;top:8px;width:27px;height:27px;border-radius:50%;background:linear-gradient(135deg,var(--gold-deep),var(--gold));color:#fff7e0;font-family:'Fredoka',sans-serif;font-weight:700;font-size:.84rem;display:flex;align-items:center;justify-content:center;}
+.recipe-steps .en{font-family:'Fredoka',sans-serif;font-weight:600;color:var(--ink);font-size:.93rem;}
+.recipe-steps .jp{display:block;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.87rem;color:var(--ink-soft);margin-top:3px;line-height:1.7;}
+.recipe-tip{background:linear-gradient(135deg,#fff8e6,#f3e6c4);border:1px solid var(--gold-deep);border-radius:12px;padding:12px 15px;margin-top:16px;font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.87rem;color:var(--ink);line-height:1.8;}
+.recipe-tip b{color:var(--gold-deep2);}
+
+footer{margin-top:62px;text-align:center;padding:26px 0;border-top:1px solid rgba(201,160,48,.12);}
+.footer-text{font-family:'Zen Maru Gothic','Kosugi Maru',sans-serif;font-size:.86rem;color:rgba(217,201,168,.45);letter-spacing:.08em;line-height:2;}
+.footer-text span{color:rgba(201,160,48,.45);}
+
+.hub-row{text-align:center;margin-top:50px;}
+.btn-hub{
+  font-family:'Fredoka',sans-serif;font-size:.9rem;font-weight:600;
+  color:rgba(200,160,224,.75);background:transparent;
+  border:1px solid rgba(167,139,250,.25);border-radius:50px;padding:9px 24px;
+  cursor:pointer;text-decoration:none;display:inline-block;
+  transition:color .2s,border-color .2s;
+}
+.btn-hub:hover{color:var(--gold-light);border-color:rgba(245,158,11,.4);}
+
+@media(max-width:560px){
+  .book-page{height:clamp(210px,38vh,300px);}
+  .book-nav{width:38px;height:52px;font-size:1.3rem;}
+  .recipe-sheet{padding:20px 14px 24px;margin:10px auto;}
+  .recipe-table{font-size:.83rem;}
+  .recipe-table th,.recipe-table td{padding:6px 5px;}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01s!important;}
+  html{scroll-behavior:auto;}
+  .sentence:not(.active){filter:none;opacity:.4;}
+}
+</style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+
+<div class="page">
+
+  <a class="story-header" href="https://herosproof.github.io" style="text-decoration:none;display:block;cursor:pointer;">
+    <img class="hp-logo" src="logo.png" alt="Hero's Proof" onerror="this.style.display='none'">
+    <p class="story-eyebrow">✦ Hero's Proof · 勇者の証 ✦</p>
+    <h1 class="story-title">Library<span class="jp">図書室(としょしつ)</span></h1>
+  </a>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="prologue" role="tab">📖 Stories<span class="jp">お話</span></button>
+    <button class="tab" data-tab="notes" role="tab">📚 Words &amp; Grammar<span class="jp">ことば・文法</span></button>
+  </nav>
+
+  <!-- ════════════ STORIES ════════════ -->
+  <section class="panel active" id="panel-prologue" role="tabpanel">
+
+    <h2 class="reader-title" id="reader-title"></h2>
+
+    <div class="book" id="book">
+      <div class="book-top">
+        <span class="book-counter" id="book-counter"></span>
+        <button class="pbtn" id="bk-jp" aria-pressed="false">あ 日本語</button>
+        <button class="pbtn" id="bk-auto" aria-pressed="false">▶ Auto</button>
+        <span class="book-speed" aria-label="Reading speed">
+          <span class="lab">🔊</span>
+          <button data-rate="0.75">0.75×</button>
+          <button data-rate="0.9">0.9×</button>
+          <button class="active" data-rate="1">1×</button>
+          <button data-rate="1.1">1.1×</button>
+        </span>
+        <button class="pbtn" id="bk-mute" title="Mute / ミュート">🔊</button>
+        <button class="pbtn" id="bk-replay-line" title="Replay sentence / もう一度">🔁</button>
+        <button class="pbtn" id="bk-fs">⛶</button>
+        <button class="pbtn" id="bk-restart" title="Restart / はじめから">↺</button>
+      </div>
+
+      <div class="book-progress"><i id="bk-bar"></i></div>
+
+      <div class="book-page" id="book-page" role="button" tabindex="0" aria-label="Next sentence / つぎの文へ">
+        <p class="book-text" id="book-text"></p>
+      </div>
+
+      <div class="book-nav-row">
+        <button class="book-nav off" id="bk-prev" aria-label="Back / まえ">‹ まえ</button>
+        <button class="book-nav off" id="bk-fwd" aria-label="Next / つぎ">つぎ ›</button>
+      </div>
+
+      <div class="book-jp" id="bk-jp-text" lang="ja"><span class="tag">日本語</span><span id="bk-jp-body"></span></div>
+      <div class="book-gloss" id="bk-gloss"><span class="w" id="bk-gloss-w"></span><span class="g" id="bk-gloss-g"></span></div>
+
+      <div class="book-end" id="bk-end">
+        <div class="ov-emoji">💜</div>
+        <div class="ov-title">The End<br>おわり</div>
+        <p class="ov-sub">Nice reading!<br>よく読(よ)めました！</p>
+        <div class="book-end-actions">
+          <button class="pbtn" id="bk-replay">↺ Read again · もう一度</button>
+          <button class="pbtn on" id="bk-more">📚 More stories · ほかのお話</button>
+        </div>
+      </div>
+
+      <div class="book-overlay" id="bk-overlay">
+        <div class="ov-emoji" id="ov-emoji">📖</div>
+        <div class="ov-title" id="ov-title"></div>
+        <p class="ov-sub" id="ov-sub"></p>
+        <button class="start-btn" id="bk-start">▶ READ · よむ</button>
+      </div>
+    </div>
+
+    <!-- ════════════ PICTURE BOOK READER (image pages + optional narration) ════════════ -->
+    <div class="pbook" id="pbook" style="display:none">
+      <div class="book-top">
+        <span class="book-counter" id="pbk-counter"></span>
+        <button class="pbtn" id="pbk-mute" title="Mute / ミュート">🔊</button>
+        <button class="pbtn" id="pbk-replay" title="Replay narration / もう一度">🔁</button>
+        <button class="pbtn" id="pbk-auto" title="Auto-advance / 自動再生">▶ Auto</button>
+        <button class="pbtn" id="pbk-view" title="Spread view / 見開き表示">📖 Spread</button>
+        <span class="book-speed" aria-label="Narration speed">
+          <span class="lab">🔊</span>
+          <button data-rate="0.9">0.9×</button>
+          <button class="active" data-rate="1">1×</button>
+          <button data-rate="1.1">1.1×</button>
+        </span>
+        <button class="pbtn" id="pbk-fs" title="Fullscreen / 全画面">⛶</button>
+        <button class="pbtn" id="pbk-restart" title="Restart / はじめから">↺</button>
+      </div>
+
+      <div class="book-progress"><i id="pbk-bar"></i></div>
+
+      <button class="book-nav book-prev off" id="pbk-prev" aria-label="Back / まえ">‹</button>
+      <button class="book-nav book-fwd off" id="pbk-fwd" aria-label="Next / つぎ">›</button>
+
+      <div class="pbook-stage" id="pbk-stage" role="button" tabindex="0" aria-label="Next page / つぎのページへ">
+        <div class="pbk-slot hidden" id="pbk-left"><img class="pbook-img" id="pbk-img-left" alt=""></div>
+        <div class="pbk-spine" id="pbk-spine" style="display:none"></div>
+        <div class="pbk-slot" id="pbk-right"><img class="pbook-img" id="pbk-img-right" alt=""></div>
+      </div>
+
+      <div class="book-end" id="pbk-end">
+        <div class="ov-emoji">💜</div>
+        <div class="ov-title">The End<br>おわり</div>
+        <p class="ov-sub" id="pbk-end-sub">Nice reading!<br>よく読(よ)めました！</p>
+        <div class="book-end-actions">
+          <button class="pbtn" id="pbk-replay">↺ Read again · もう一度</button>
+          <button class="pbtn on" id="pbk-more">📚 More stories · ほかのお話</button>
+        </div>
+      </div>
+
+      <div class="book-overlay" id="pbk-overlay">
+        <img class="pbook-cover-img" id="pbk-cover-img" alt="" style="display:none">
+        <div class="ov-emoji" id="pbk-ov-emoji" style="display:none">📖</div>
+        <div class="ov-title" id="pbk-ov-title"></div>
+        <p class="ov-sub" id="pbk-ov-sub"></p>
+        <a class="pbook-pdf-link" id="pbk-pdf-link" href="#" target="_blank" rel="noopener" style="display:none">📄 Also available as a PDF · PDF版もあります</a>
+        <button class="start-btn" id="pbk-start">▶ READ · よむ</button>
+      </div>
+    </div>
+
+    <p class="reader-hint">
+      Only the glowing sentence is in focus. Use the arrows (or tap) to read on. Tap a <b>gold word</b> for its meaning!<br>
+      光っている文だけがはっきり見える。矢印(やじるし)かタップで次(つぎ)へ。<b>金色(きんいろ)の言葉(ことば)</b>で意味(いみ)が出(で)るよ！
+    </p>
+
+    <h2 class="shelf-heading">📖 Main Story<span class="jp">本編(ほんぺん)</span></h2>
+    <div class="shelf" id="story-shelf-main">
+      <div class="side-card" data-story="prologue" role="button" tabindex="0">
+        <span class="side-cover" id="cover-prologue">📖</span>
+        <div class="side-body">
+          <h4>The Day the World Cracked<span class="jp">世界(せかい)が割(わ)れた日(ひ)</span></h4>
+          <p>The prologue — Lumi's story, before the game begins.<br>プロローグ。ゲームの前(まえ)の、ルミのお話(はなし)。</p>
+          <span class="side-pill">📖 Prologue · プロローグ</span>
+        </div>
+      </div>
+
+      <a class="side-card side-go" href="https://herosproof.github.io/story-mode" style="text-decoration:none;">
+        <span class="side-cover">🗺️</span>
+        <div class="side-body">
+          <h4>The Main Story lives in Story Mode<span class="jp">本編(ほんぺん)はストーリーモードへ</span></h4>
+          <p>Follow Lumi's adventure stage by stage — story, spells, quests, and boss battles! 🔮<br>ルミの冒険(ぼうけん)を、ステージごとに。呪文(じゅもん)やクエスト、ボス戦(せん)もあるよ！</p>
+          <span class="side-pill">🗺️ Go to Story Mode · ストーリーモードへ</span>
+        </div>
+      </a>
+    </div>
+
+    <h2 class="shelf-heading">✨ Gaiden<span class="jp">外伝(がいでん)</span></h2>
+    <p class="shelf-sub">Side stories and picture books from around Lumi's world.<br>ルミの世界(せかい)の、いろいろな番外編(ばんがいへん)と絵本(えほん)。</p>
+    <div class="shelf" id="story-shelf-gaiden">
+      <div class="side-card" data-story="littlepeople" role="button" tabindex="0">
+        <span class="side-cover" id="cover-littlepeople">🥳</span>
+        <div class="side-body">
+          <h4>The Little People's Big, BIG Party<span class="jp">コビトたちの おおきな おおきな パーティー</span></h4>
+          <p>A silly side story about flavors, friends, and one very confused goblin. 🍬🍋🧂🌶️<br>味(あじ)と仲間(なかま)の、おバカで楽(たの)しいお話(はなし)。</p>
+          <span class="side-pill">⭐ Side Story 1 · 番外編①</span>
+        </div>
+      </div>
+
+      <div class="side-card side-recipe" data-recipe="little-people-cake" role="button" tabindex="0">
+        <span class="side-cover">🍰</span>
+        <div class="side-body">
+          <h4>The Little People's Party Cake<span class="jp">コビトたちのパーティーケーキ</span></h4>
+          <p>Bake the magic cake from the party — honey, sour apple, salt &amp; a little spice! 🍯🍏🧂🌶️<br>お話(はなし)に出(で)てくる、まほうのケーキを作(つく)ろう！</p>
+          <span class="side-pill">🍰 Recipe · レシピ</span>
+        </div>
+      </div>
+
+      <div class="side-card" data-picbook="lumi-lights" role="button" tabindex="0">
+        <span class="side-cover" id="cover-lumi-lights">🎃</span>
+        <div class="side-body">
+          <h4>Lumi Lights the Way<span class="jp">ルミがてらすみち</span></h4>
+          <p>Little Lumi's very first story — a bilingual picture book, made for Halloween! 🎃<br>小(ちい)さなルミの、はじめての絵本(えほん)。</p>
+          <span class="side-pill">🎃 Picture Book · 絵本</span>
+        </div>
+      </div>
+
+      <div class="side-card" data-picbook="candy-cats" role="button" tabindex="0">
+        <span class="side-cover" id="cover-candy-cats">🍬</span>
+        <div class="side-body">
+          <h4>The Candy Cats of Candy Forest<span class="jp">キャンディーのもりのキャンディーキャットたち</span></h4>
+          <p>Sweet NPC friends from a forest of candy — a picture book made before Hero's Proof even began! 🍬🐱<br>あまいお菓子(かし)の森(もり)のなかまたちの絵本(えほん)。</p>
+          <span class="side-pill">🍬 Picture Book · 絵本</span>
+        </div>
+      </div>
+
+      <div class="side-card side-soon">
+        <span class="side-cover">✏️</span>
+        <div class="side-body">
+          <h4>More tales soon<span class="jp">もっと、お話(はなし)を準備中(じゅんびちゅう)</span></h4>
+          <p>New side stories from Lumi's world are on the way!<br>ルミの世界(せかい)の新(あたら)しいお話(はなし)が、もうすぐ！</p>
+          <span class="side-pill">⚙ Coming soon · 準備中</span>
+        </div>
+      </div>
+    </div>
+
+    <a class="npc-note" href="https://herosproof.github.io/characters/" style="display:block;text-decoration:none;cursor:pointer;">
+      <span class="em">🧚 🧝 🍳 👑 👸 🐉</span>
+      <p>Want to meet the cast? Lumi, the Heroes, and every guardian are waiting! 💜<br>
+         <span class="jp">キャラクターに会(あ)いたい？ルミやヒーローたち、守護者(しゅごしゃ)みんなが待(ま)ってるよ。</span></p>
+      <span class="side-pill" style="display:inline-block;margin-top:11px;">🎭 Meet the Characters · キャラクターへ</span>
+    </a>
+  </section>
+
+  <!-- ════════════ WORDS & GRAMMAR ════════════ -->
+  <section class="panel" id="panel-notes" role="tabpanel">
+    <p class="notes-intro">プロローグに出(で)てきた言葉(ことば)と、中学(ちゅうがく)の英語(えいご)の予習(よしゅう)だよ！📚</p>
+
+    <div class="note-card">
+      <h3>📒 Word List<span class="jp">プロローグのたんご</span></h3>
+      <div class="vocab-grid" id="vocab-grid"></div>
+    </div>
+
+    <div class="note-card">
+      <h3>🕐 Past Tense<span class="jp">過去形(かこけい)</span></h3>
+      <p class="sub">「〜した」「〜だった」と、むかしのことを言(い)うとき、動詞(どうし)の形(かたち)が変(か)わるよ。</p>
+      <p class="lead">規則動詞(きそくどうし) — ルールどおり！</p>
+      <div class="ex"><code>help → help<b>ed</b></code><code>push → push<b>ed</b></code><code>crack → crack<b>ed</b></code></div>
+      <p>ほとんどの動詞(どうし)は、語尾(ごび)に <b>-ed</b> をつけるだけ！</p>
+      <p class="lead" style="margin-top:12px">不規則動詞(ふきそくどうし) — 形(かたち)が変(か)わる！</p>
+      <div class="ex"><code>find → found</code><code>go → went</code><code>feel → felt</code><code>say → said</code><code>is → was</code></div>
+      <p>これは覚(おぼ)えるしかない！でも中学(ちゅうがく)でたくさん練習(れんしゅう)するよ。</p>
+    </div>
+
+    <div class="note-card">
+      <h3>🚫 couldn't<span class="jp">〜できなかった</span></h3>
+      <div class="ex"><code>could = できた</code><code>couldn't = できなかった</code></div>
+      <p>"Lumi <b>couldn't</b> do it alone."（ルミは一人(ひとり)ではできなかった。）<br>couldn't のあとは、動詞(どうし)の原形(げんけい)だよ！</p>
+    </div>
+
+    <div class="note-card">
+      <h3>💪 anyway<span class="jp">それでも・とにかく</span></h3>
+      <p>"It might not be enough. But we're helping <b>anyway</b>."<br>（足(た)りないかもしれない。でも、とにかく助(たす)ける。）<br>あきらめない気持(きも)ちを表(あらわ)す言葉(ことば)。会話(かいわ)でもよく使(つか)うよ！</p>
+    </div>
+
+    <div class="note-card">
+      <h3>🎨 Adjective Order<span class="jp">形容詞(けいようし)のならび</span></h3>
+      <p>英語(えいご)は、名詞(めいし)の前(まえ)に形容詞(けいようし)をいくつでも並(なら)べられるよ。日本語(にほんご)と語順(ごじゅん)がちがうから気(き)をつけて！</p>
+      <div class="ex"><code>her <b>cracked, beautiful</b> world</code></div>
+      <p>日本語(にほんご):「割(わ)れた、美(うつく)しい 世界(せかい)」→ 英語(えいご)も形容詞(けいようし)が先(さき)、名詞(めいし)はあと！</p>
+    </div>
+
+    <p class="study-teaser">※ これはプロローグのための言葉(ことば)と文法(ぶんぽう)です。<br>もっと広(ひろ)い英語(えいご)の練習(れんしゅう)は、いつか別(べつ)の「スタディルーム」で！</p>
+  </section>
+
+  <div class="hub-row">
+    <a href="https://herosproof.github.io" class="btn-hub">🏠 Home / ホーム</a>
+  </div>
+
+  <footer>
+    <p class="footer-text">Hero's Proof <span>勇者の証</span><br>Made with 💜 for elementary English learners · 小学生の英語学習のために</p>
+  </footer>
+
+  <!-- ════════════ RECIPE MODAL ════════════ -->
+  <div class="recipe-modal" id="recipe-modal" role="dialog" aria-modal="true" aria-labelledby="recipe-heading">
+    <div class="recipe-sheet" role="document">
+      <button class="recipe-close" id="recipe-close" aria-label="Close / とじる">×</button>
+      <h2 class="recipe-title" id="recipe-heading">🍰 The Little People's Party Cake<span class="jp">コビトたちのパーティーケーキ</span></h2>
+      <p class="recipe-intro">The magic cake from <b>“The Little People's Big, BIG Party”</b> — made with honey, sour apple, salt, and a little spice. 🍯🍏🧂🌶️<br>
+      「コビトたちの大(だい)パーティー」に出(で)てくる、まほうのケーキ。はちみつ・すっぱいリンゴ・塩(しお)・すこしのスパイスでできています。</p>
+
+      <!-- ① MUG CAKE (quick & easy — no oven!) -->
+      <section class="recipe-sec">
+        <h3 class="recipe-sec-head">① Mug Cake<span class="jp">マグカップケーキ</span></h3>
+        <p class="recipe-sec-note">One mug, one serving — no oven, just a microwave! 🔌<br>マグカップ1つ分(ぶん)（1人分(にんぶん)）。オーブンはいらない！電子(でんし)レンジだけで作(つく)れます。</p>
+        <p class="recipe-sub">Ingredients · 材料(ざいりょう)</p>
+        <table class="recipe-table">
+          <thead><tr><th>材料</th><th>Ingredient</th><th>分量</th></tr></thead>
+          <tbody>
+            <tr><td>小麦粉(こむぎこ)</td><td class="en">Flour</td><td>大さじ4</td></tr>
+            <tr><td>ベーキングパウダー</td><td class="en">Baking powder</td><td>小さじ½</td></tr>
+            <tr><td>塩(しお)</td><td class="en">Salt</td><td>少々(しょうしょう)</td></tr>
+            <tr><td>はちみつ</td><td class="en">Honey</td><td>大さじ1</td></tr>
+            <tr><td>ぎゅうにゅう</td><td class="en">Milk</td><td>大さじ1</td></tr>
+            <tr><td>サラダ油(あぶら)</td><td class="en">Vegetable oil (or melted butter)</td><td>大さじ1</td></tr>
+            <tr><td>すっぱいリンゴ（すりおろす）</td><td class="en">Sour apple, grated</td><td>大さじ2</td></tr>
+            <tr><td>チリパウダー</td><td class="en">Chili powder</td><td>少々(しょうしょう)</td></tr>
+          </tbody>
+        </table>
+        <p class="recipe-sub">Steps · 作(つく)り方(かた)</p>
+        <ol class="recipe-steps">
+          <li><span class="en">Put all the ingredients in a big mug.</span><span class="jp">大(おお)きめのマグカップに、材料(ざいりょう)を全部(ぜんぶ)入(い)れます。</span></li>
+          <li><span class="en">Mix well with a spoon until smooth.</span><span class="jp">スプーンで、なめらかになるまでよくまぜます。</span></li>
+          <li><span class="en">Microwave (600W) for about 1 min 30 sec – 2 min.</span><span class="jp">電子(でんし)レンジ（600W）で、1分(ぷん)30秒(びょう)〜2分(ふん)くらい温(あたた)めます。</span></li>
+          <li><span class="en">Check with a toothpick — if it comes out clean, it's ready! Let it cool a little before eating.</span><span class="jp">つまようじをさして、何(なに)もつかなければできあがり！少(すこ)し冷(さ)ましてから食(た)べましょう。</span></li>
+        </ol>
+      </section>
+
+      <!-- ② LAYERED CAKE (the full party cake) -->
+      <section class="recipe-sec">
+        <h3 class="recipe-sec-head">② Layered Cake<span class="jp">レイヤーケーキ</span></h3>
+        <p class="recipe-sec-note">Two 15cm round pans · serves 8 · oven 170°C. 🎂<br>まるい入(い)れ物(もの)（15cm）を2つ・8人分(にんぶん)。オーブンは170°C。</p>
+        <p class="recipe-sub">Batter · 生地(きじ)</p>
+        <table class="recipe-table">
+          <thead><tr><th>材料</th><th>Ingredient</th><th>分量</th></tr></thead>
+          <tbody>
+            <tr><td>小麦粉(こむぎこ)</td><td class="en">All-purpose flour</td><td>150g</td></tr>
+            <tr><td>ベーキングパウダー</td><td class="en">Baking powder</td><td>小さじ2</td></tr>
+            <tr><td>塩(しお)</td><td class="en">Salt</td><td>少々(しょうしょう)</td></tr>
+            <tr><td>やわらかいバター</td><td class="en">Butter, softened</td><td>80g</td></tr>
+            <tr><td>はちみつ</td><td class="en">Honey</td><td>100g</td></tr>
+            <tr><td>たまご</td><td class="en">Eggs</td><td>2こ</td></tr>
+            <tr><td>ぎゅうにゅう</td><td class="en">Milk</td><td>大さじ2 / 30ml</td></tr>
+            <tr><td>青(あお)いリンゴ（すっぱいもの・すりおろして軽(かる)く汁(しる)を絞(しぼ)る）</td><td class="en">Sour green apple, grated &amp; lightly squeezed</td><td>1こ</td></tr>
+            <tr><td>チリパウダー</td><td class="en">Chili powder</td><td>少々(しょうしょう)</td></tr>
+          </tbody>
+        </table>
+        <p class="recipe-sub">Frosting · フロスティング</p>
+        <table class="recipe-table">
+          <thead><tr><th>材料</th><th>Ingredient</th><th>分量</th></tr></thead>
+          <tbody>
+            <tr><td>やわらかいバター</td><td class="en">Butter, softened</td><td>50g</td></tr>
+            <tr><td>やわらかいクリームチーズ</td><td class="en">Cream cheese, softened</td><td>100g</td></tr>
+            <tr><td>はちみつ</td><td class="en">Honey</td><td>50g</td></tr>
+            <tr><td>粉(こな)ざとう</td><td class="en">Powdered sugar</td><td>100g</td></tr>
+            <tr><td>塩(しお)（仕上(しあ)げ用(よう)）</td><td class="en">Salt, for topping</td><td>少々(しょうしょう)</td></tr>
+          </tbody>
+        </table>
+        <p class="recipe-sub">Steps · 作(つく)り方(かた)</p>
+        <ol class="recipe-steps">
+          <li><span class="en">Heat the oven to 170°C. Butter two round pans.</span><span class="jp">オーブンを170°Cに温(あたた)めます。まるい入(い)れ物(もの)を2つ用意(ようい)して、バターをぬります。</span></li>
+          <li><span class="en">Mix the flour, baking powder, and salt.</span><span class="jp">ボウルに小麦粉(こむぎこ)・ベーキングパウダー・塩(しお)を入(い)れて、まぜます。</span></li>
+          <li><span class="en">In a big bowl, mix the butter and honey until smooth.</span><span class="jp">大(おお)きいボウルでバターとはちみつを、なめらかになるまでまぜます。</span></li>
+          <li><span class="en">Add the eggs one at a time, mixing well each time.</span><span class="jp">たまごを1こずつ入(い)れて、そのたびによくまぜます。</span></li>
+          <li><span class="en">Add the flour mix and milk a little at a time, alternating.</span><span class="jp">粉(こな)の入(はい)ったボウルとぎゅうにゅうを、少(すこ)しずつこうごに入(い)れます。</span></li>
+          <li><span class="en">Stir in the grated apple.</span><span class="jp">すりおろして軽(かる)く汁(しる)を絞(しぼ)ったリンゴを入(い)れて、まぜます。</span></li>
+          <li><span class="en">Add a little chili powder and mix once more.</span><span class="jp">チリパウダーを少(すこ)し入(い)れて、もう一度(いちど)まぜます。</span></li>
+          <li><span class="en">Pour into both pans. Bake about 30–35 min, until a toothpick comes out clean.</span><span class="jp">生地(きじ)を2つの入(い)れ物(もの)に分(わ)けます。つまようじをさして、何(なに)もつかなくなるまで、約(やく)30〜35分(ふん)焼(や)きます。</span></li>
+          <li><span class="en">Cool in the pans 10 min, then cool fully on a plate.</span><span class="jp">入(い)れ物(もの)のまま10分(ぷん)冷(さ)まし、そのあとお皿(さら)の上(うえ)でしっかり冷(さ)まします。</span></li>
+          <li><span class="en">Beat the frosting butter, cream cheese, honey, and powdered sugar until fluffy.</span><span class="jp">フロスティング用(よう)のバター・クリームチーズ・はちみつ・粉(こな)ざとうを、ふわふわになるまでまぜます。</span></li>
+          <li><span class="en">Stack the two cakes with frosting between, then frost the outside.</span><span class="jp">2つのケーキの間(あいだ)にフロスティングをぬって重(かさ)ね、まわりにもぬります。</span></li>
+          <li><span class="en">Sprinkle a little salt on top — honey, sour apple, salt &amp; spice, just like the story! ✨</span><span class="jp">仕上(しあ)げに塩(しお)を少(すこ)しふりかけます。はちみつ・すっぱいリンゴ・塩(しお)・スパイスの、お話(はなし)と同(おな)じケーキのできあがり！</span></li>
+        </ol>
+      </section>
+
+      <p class="recipe-tip"><b>Tip · ヒント:</b> 「少々(しょうしょう)」は指(ゆび)2本(ほん)でつまめる量(りょう)、「大(おお)さじ」は大(おお)きいスプーン、「小(こ)さじ」は小(ちい)さいスプーンです。</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Starfield ── */
+(function(){
+  const sf=document.getElementById('starfield');
+  const glyphs=['✦','✧','⋆','✴','★','✸','·','✦','✧'];
+  const colors=['#f0d060','#c9a030','#d9c9a8','#f0d060','#c8a0e0','#f8f0c0'];
+  for(let i=0;i<60;i++){
+    const s=document.createElement('span');
+    const sz=(Math.random()*1.2+0.5).toFixed(2);
+    s.textContent=glyphs[Math.floor(Math.random()*glyphs.length)];
+    s.style.cssText=`top:${Math.random()*100}%;left:${Math.random()*100}%;--d:${2+Math.random()*5}s;--delay:-${Math.random()*7}s;--sz:${sz}rem;--col:${colors[Math.floor(Math.random()*colors.length)]};`;
+    sf.appendChild(s);
+  }
+})();
+
+/* ── furigana: 漢字(かな) → ruby (small, above the text) ── */
+function ruby(s){return s.replace(/([\u4e00-\u9fff\u3005]+)\(([\u3040-\u309f\u30a0-\u30ffー]+)\)/g,'<ruby>$1<rt>$2</rt></ruby>');}
+/* walk a subtree and turn every 漢字(かな) text run into ruby */
+function rubifyTree(root){
+  const re=/[\u4e00-\u9fff\u3005]+\([\u3040-\u309f\u30a0-\u30ffー]+\)/;
+  const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){
+    if(!n.nodeValue||!re.test(n.nodeValue))return NodeFilter.FILTER_REJECT;
+    let p=n.parentNode;
+    while(p){const t=p.tagName;if(t==='RT'||t==='RUBY'||t==='SCRIPT'||t==='STYLE')return NodeFilter.FILTER_REJECT;p=p.parentNode;}
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+  nodes.forEach(n=>{const span=document.createElement('span');span.innerHTML=ruby(n.nodeValue);n.parentNode.replaceChild(span,n);});
+}
+/* ── vocab token {word|reading / meaning} → tappable ── */
+function renderEN(s){return s.replace(/\{([^|}]+)\|([^}]*)\}/g,(m,w,g)=>`<button type="button" class="vocab" data-w="${w}" data-g="${g.replace(/"/g,'&quot;')}">${w}</button>`);}
+
+/* ── Tabs ── */
+const tabs=document.querySelectorAll('.tab');
+const panels={prologue:document.getElementById('panel-prologue'),notes:document.getElementById('panel-notes')};
+function showTab(name){
+  tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+  Object.entries(panels).forEach(([k,p])=>p.classList.toggle('active',k===name));
+  if(name!=='prologue'){stopBookAudio();if(window.stopPicBookAudio)stopPicBookAudio();}
+}
+tabs.forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+
+/* ════════════ STORYBOOK DATA (text reader: Prologue, Little People) ════════════
+   Everything lives in the STORY repo (served at /story/):
+     assets/voice/prologue/pro_01.mp3 … pro_36.mp3
+     assets/voice/littlepeople/lp_01.mp3 … lp_31.mp3
+     assets/covers/prologue.jpg                          (optional shelf cover)
+     assets/covers/littlepeople.jpg                      (optional shelf cover)
+   Optional inline art (light-novel style, 1–3 per story) lives at:
+     assets/story-art/<file>.jpg — set an `img:` field on any beat and the
+     picture appears above that sentence. Missing files fail silently.
+   Missing audio files fail silently too. English narration only.
+   (Character portraits now live in the separate CHARACTERS repo — see characters.html)
+
+   ════ PICTURE BOOK DATA (image-page readers: Lumi Lights the Way, Candy Cats) ════
+   See PICBOOKS below. Pages live at:
+     assets/lumi-lights/page (1).JPG … page (61).JPG      — page (1) doubles as the cover
+     assets/lumi-lights/page  (1).JPG … page  (61).JPG
+     assets/candy-cats/page  (1).JPG … page  (21).JPG
+   Optional one-track narration per spread (only spreads with text get audio;
+   front/back matter and cover spreads stay silent):
+     assets/voice/lumi-lights/spread_01.mp3 … spread_30.mp3
+     assets/voice/candy-cats/spread_01.mp3 … spread_08.mp3
+   Narration speed is adjustable (0.5×–1.25×) rather than recorded twice.
+*/
+const ASSET='assets/';
+const STORIES={
+  prologue:{
+    emoji:'📖',prefix:'pro',voiceId:'prologue',
+    titleEn:'The Day the World Cracked',titleJp:'世界(せかい)が割(わ)れた日(ひ)',
+    subEn:"Lumi's story, before the game begins.",subJp:'ゲームの前(まえ)の、ルミのお話(はなし)。',
+    beats:[
+      {img:'prologue_lumi.jpg', en:'This is Lumi. She is a {mage|メイジ / 魔法使(まほうつか)い}.', jp:'これはルミ。魔法使(まほうつか)いだよ。'},
+      {en:'She lives in a small, beautiful world. It has four special areas: the Castle Area, the Forest Area, the Mountain Area, and the Sky Area.', jp:'彼女(かのじょ)は小(ちい)さくて美(うつく)しい世界(せかい)に住(す)んでいる。そこには四(よっ)つの特別(とくべつ)なエリアがある。城(しろ)エリア、森(もり)エリア、山(やま)エリア、空(そら)エリア。'},
+      {en:'A few years ago, when Lumi was much younger, a {terrible|テリブル / ひどい} danger came to her world.', jp:'数年前(すうねんまえ)、ルミがもっと小(ちい)さかったころ、ひどい危機(きき)が世界(せかい)におとずれた。'},
+      {en:"Lumi's magic was special. It was {star power|スターパワー / 星(ほし)の力(ちから)} — bright and powerful, like real starlight.", jp:'ルミの魔法(まほう)は特別(とくべつ)だった。それは星(ほし)の力(ちから)。本物(ほんもの)の星(ほし)の光(ひかり)のように、明(あか)るくて強(つよ)い。'},
+      {en:'She {reached|リーチト / 手(て)を伸(の)ばした} deep inside herself and used every bit of her star power to fight the danger.', jp:'彼女(かのじょ)は自分(じぶん)の奥(おく)深(ふか)くに手(て)を伸(の)ばし、星(ほし)の力(ちから)をすべて使(つか)って危機(きき)と戦(たたか)った。'},
+      {en:'She saved her whole world.', jp:'彼女(かのじょ)は世界(せかい)を救(すく)った。'},
+      {en:'After that day, everyone called her a {hero|ヒーロー / 英雄(えいゆう)}.', jp:'その日(ひ)から、みんなが彼女(かのじょ)をヒーローと呼(よ)んだ。'},
+      {en:'After that, her star power was the strongest in her world. So Lumi became the new {guardian|ガーディアン / 守護者(しゅごしゃ)} of the purple crystal.', jp:'その後(あと)、彼女(かのじょ)の星(ほし)の力(ちから)は世界(せかい)でいちばん強(つよ)くなった。こうしてルミは、紫(むらさき)の水晶(すいしょう)の新(あたら)しい守護者(しゅごしゃ)になった。'},
+      {en:'That is how she met four other guardians. They quickly became her best friends.', jp:'こうして、ほかの四人(よにん)の守護者(しゅごしゃ)に出会(であ)った。みんな、すぐに親友(しんゆう)になった。'},
+      {en:'Mimic {guards|ガーズ / 守(まも)る} the yellow crystal in the Castle Area.', jp:'ミミックは城(しろ)エリアで黄色(きいろ)の水晶(すいしょう)を守(まも)っている。'},
+      {en:'Golem guards the green crystal in the Forest Area.', jp:'ゴーレムは森(もり)エリアで緑(みどり)の水晶(すいしょう)を守(まも)っている。'},
+      {en:'Dragon guards the red crystal in the Mountain Area.', jp:'ドラゴンは山(やま)エリアで赤(あか)い水晶(すいしょう)を守(まも)っている。'},
+      {en:'General Winter guards the blue crystal in the Sky Area.', jp:'冬将軍(ふゆしょうぐん)は空(そら)エリアで青(あお)い水晶(すいしょう)を守(まも)っている。'},
+      {en:"Lumi's crystal is different. It doesn't watch over just one area. It sends power to the other four crystals instead. All five crystals are connected to each other.", jp:'ルミの水晶(すいしょう)は違(ちが)う。ひとつのエリアだけを守(まも)るのではなく、ほかの四(よっ)つの水晶(すいしょう)に力(ちから)を送(おく)っている。五(いつ)つの水晶(すいしょう)は、すべてつながっている。'},
+      {en:'For the next two years, Lumi trained very hard. Her star power grew stronger and stronger.', jp:'それから二年間(にねんかん)、ルミは一生懸命(いっしょうけんめい)訓練(くんれん)した。星(ほし)の力(ちから)は、どんどん強(つよ)くなった。'},
+      {en:'Now, Lumi is older. She is cool, {confident|コンフィデント / 自信(じしん)がある}, and one of the strongest young mages in her whole world.', jp:'今(いま)、ルミは成長(せいちょう)した。かっこよくて、自信(じしん)があって、世界(せかい)でいちばん強(つよ)い若(わか)い魔法使(まほうつか)いの一人(ひとり)だ。'},
+      {en:'One afternoon, in {Advanced|アドバンスト / 上級(じょうきゅう)の} Magic class, Lumi practiced an {extremely|エクストリームリー / 非常(ひじょう)に} {difficult|ディフィカルト / 難(むずか)しい} spell.', jp:'ある日(ひ)の午後(ごご)、上級(じょうきゅう)魔法(まほう)のクラスで、ルミは非常(ひじょう)に難(むずか)しい呪文(じゅもん)を練習(れんしゅう)していた。'},
+      {en:'"{Feel|フィール / 感(かん)じる} the world around you," her teacher warned. "But never push too hard."', jp:'「まわりの世界(せかい)を感(かん)じて」と先生(せんせい)が注意(ちゅうい)した。「でも、絶対(ぜったい)に無理(むり)をしないで。」'},
+      {en:'Lumi smiled. "{I\u2019ve got this|アイヴ・ガット・ディス / だいじょうぶ、できる}," she thought.', jp:'ルミは微笑(ほほえ)んだ。「だいじょうぶ、できる」と思(おも)った。'},
+      {en:'She reached out with her magic — and pushed just a little too hard.', jp:'彼女(かのじょ)は魔法(まほう)を伸(の)ばした。そして、ほんの少(すこ)しだけ、力(ちから)を入(い)れすぎた。'},
+      {img:'prologue_crack.jpg', en:'CRACK! Her power became too strong, too fast.', jp:'バリッ！力(ちから)が強(つよ)くなりすぎた。速(はや)すぎた。'},
+      {en:"The extra power {didn't|ディドゥント / 〜しなかった} stay with Lumi. It {rushed|ラッシュト / 一気(いっき)に流(なが)れ込(こ)んだ} straight into the other four crystals.", jp:'あふれた力(ちから)はルミのところにとどまらなかった。ほかの四(よっ)つの水晶(すいしょう)へ、一気(いっき)に流(なが)れ込(こ)んだ。'},
+      {en:'Four cracks opened at the very same {moment|モーメント / 瞬間(しゅんかん)} — one over the Castle Area, one over the Forest Area, one over the Mountain Area, one over the Sky Area.', jp:'まったく同(おな)じ瞬間(しゅんかん)、四(よっ)つのひびが開(ひら)いた。城(しろ)エリア、森(もり)エリア、山(やま)エリア、空(そら)エリアの上(うえ)に、ひとつずつ。'},
+      {en:"Something {strange|ストレンジ / 奇妙(きみょう)な} happened to Mimic, Golem, Dragon, and General Winter. They started to {act|アクト / 行動(こうどう)する} differently. They didn't {seem|シーム / 〜のように見(み)える} like {themselves|ゼムセルヴズ / 彼(かれ)ら自身(じしん)} {anymore|エニモア / もう〜ない}.", jp:'ミミック、ゴーレム、ドラゴン、冬将軍(ふゆしょうぐん)に奇妙(きみょう)なことが起(お)きた。行動(こうどう)がおかしくなり、もう彼(かれ)ら自身(じしん)ではないように見(み)えた。'},
+      {en:'Lumi felt {terrible|テリブル / ひどい気持(きも)ち}. "I did this," she {thought|ソート / 思(おも)った}. "I {hurt|ハート / 傷(きず)つけた} my friends. I have to {fix|フィックス / 直(なお)す} it."', jp:'ルミはひどい気持(きも)ちになった。「わたしがやったんだ」と思(おも)った。「友達(ともだち)を傷(きず)つけた。直(なお)さなきゃ。」'},
+      {en:'She {tried|トライド / 試(ため)した} to close the cracks {alone|アローン / ひとりで}. But even with all her new power, it was too hard for just one person.', jp:'彼女(かのじょ)はひとりで、ひびを閉(と)じようとした。でも、新(あたら)しい力(ちから)をすべて使(つか)っても、一人(ひとり)では難(むずか)しすぎた。'},
+      {en:'Then her classmates {came|ケイム / 来(き)た} to help. "We\u2019re helping you {anyway|エニウェイ / とにかく}," they said.', jp:'そこへ、クラスメイトたちが助(たす)けに来(き)た。「とにかく手伝(てつだ)うよ」と言(い)った。'},
+      {en:"Together, they {slowed|スロウド / 遅(おそ)くした} the cracks down. But they {couldn't|クドゥント / 〜できなかった} stop them completely.", jp:'みんなで、ひびの広(ひろ)がりを遅(おそ)くした。でも、完全(かんぜん)に止(と)めることはできなかった。'},
+      {en:"Lumi {realized|リアライズド / 気(き)づいた} something important: this time, she {wasn't|ワズント / 〜ではなかった} {enough|イナフ / 十分(じゅうぶん)} — not alone.", jp:'ルミは大切(たいせつ)なことに気(き)づいた。今回(こんかい)は、自分(じぶん)だけでは十分(じゅうぶん)ではない。ひとりでは。'},
+      {en:'One {night|ナイト / 夜(よる)}, while everyone else was sleeping, Lumi sat alone and thought hard.', jp:'ある夜(よる)、みんなが眠(ねむ)っている間(あいだ)、ルミはひとりで座(すわ)って、深(ふか)く考(かんが)えた。'},
+      {en:"She wasn't waiting for a {signal|シグナル / 信号(しんごう)} from someone else. She was looking for {hope|ホープ / 希望(きぼう)}.", jp:'彼女(かのじょ)は誰(だれ)かからの信号(しんごう)を待(ま)っていたのではない。希望(きぼう)を探(さが)していたのだ。'},
+      {en:"Far away, in another world, she noticed something amazing — two people with hidden power. They didn't know it yet.", jp:'遠(とお)く離(はな)れた別(べつ)の世界(せかい)に、彼女(かのじょ)はすごいものを見(み)つけた。隠(かく)れた力(ちから)を持(も)つ、二人(ふたり)の人間(にんげん)。本人(ほんにん)たちは、まだ気(き)づいていない。'},
+      {en:'An idea came to her. "I don\u2019t have to wait," she thought. "I can {build|ビルド / 作(つく)る} a strong {anchor|アンカー / 錨(いかり)} and call them myself!"', jp:'ひらめきが浮(う)かんだ。「待(ま)たなくていいんだ。強(つよ)い錨(いかり)を作(つく)って、わたしから呼(よ)べばいい！」'},
+      {en:'It was a {reckless|レックレス / 無謀(むぼう)な} {plan|プラン / 計画(けいかく)}. But Lumi never backed down from a challenge.', jp:'それは無謀(むぼう)な計画(けいかく)だった。でも、ルミは挑戦(ちょうせん)から逃(に)げたことなど、一度(いちど)もない。'},
+      {img:'prologue_resolve.jpg', en:'She looked at her {broken|ブロークン / 壊(こわ)れた}, beautiful world one more time. "Tomorrow," she said. "I\u2019ll call them."', jp:'彼女(かのじょ)は、壊(こわ)れて、それでも美(うつく)しい世界(せかい)を、もう一度(いちど)見(み)た。「明日(あした)」と言(い)った。「明日(あした)、呼(よ)ぼう。」'},
+      {en:'And that, heroes, is {exactly|イグザクトリー / まさに} where the two of you come in.', jp:'そして、ヒーローたちよ。まさにそこから、君(きみ)たち二人(ふたり)の出番(でばん)だ。'},
+    ]
+  },
+  littlepeople:{
+    emoji:'🥳',prefix:'lp',voiceId:'littlepeople',
+    titleEn:"The Little People's Big, BIG Party",titleJp:'コビトたちの おおきな おおきな パーティー',
+    subEn:'Side Story 1 · A very silly tale from the Forest Area. 🥳',subJp:'番外編(ばんがいへん)①・森(もり)エリアの、とってもおバカなお話(はなし)。',
+    beats:[
+      {en:'Deep in the {Forest Area|フォレスト・エリア / 森(もり)エリア}, there was a village of Little People.', jp:'森(もり)エリアの奥(おく)に、コビトたちの村(むら)があった。'},
+      {en:'They were very small. But they were also very {energetic|エナジェティック / 元気(げんき)な}!', jp:'彼(かれ)らはとても小(ちい)さい。でも、とても元気(げんき)！'},
+      {en:'More than anything else, the Little People loved {parties|パーティー / パーティー}. 🥳', jp:'なによりも、コビトたちはパーティーが大好(だいす)きだった。'},
+      {en:'Today was a party day. Why? There was no {reason|リーズン / 理由(りゆう)} at all.', jp:'今日(きょう)はパーティーの日(ひ)。なぜ？理由(りゆう)は、まったくない。'},
+      {en:'It was just a Tuesday. But that was reason {enough|イナフ / 十分(じゅうぶん)} for them. 😄', jp:'ただの火曜日(かようび)。でも、それで彼(かれ)らには十分(じゅうぶん)だった。'},
+      {en:'By {noon|ヌーン / 正午(しょうご)}, the {village square|ヴィレッジ・スクエア / 村(むら)の広場(ひろば)} was full of decorations.', jp:'正午(しょうご)には、村(むら)の広場(ひろば)はかざりでいっぱいになった。'},
+      {img:'lp_paty.jpg', en:'A big {banner|バナー / 横断幕(おうだんまく)} {hung|ハング / かかっていた} over the square. It said: "PATY."', jp:'大(おお)きな横断幕(おうだんまく)が広場(ひろば)の上(うえ)にかかっていた。そこには「PATY」。'},
+      {en:'There was no room left for the letter R. 😬', jp:'「R」を書(か)くスペースが、なくなってしまったのだ。'},
+      {en:'A {villager|ヴィレジャー / 村人(むらびと)} named Wumble {stacked|スタックト / 積(つ)み上(あ)げた} some rocks into a "star" shape.', jp:'ウンブルという村人(むらびと)が、石(いし)を「星(ほし)」の形(かたち)に積(つ)み上(あ)げた。'},
+      {en:'It looked exactly like a {turnip|ターニップ / カブ}. But Wumble said, "It\u2019s a star!" No one argued. 😶', jp:'それはカブそっくりだった。でもウンブルは「星(ほし)だ！」と言(い)った。誰(だれ)も反論(はんろん)しなかった。'},
+      {en:'Two hours before the party, a Little Person named Pip asked one {important|インポータント / 大切(たいせつ)な} question.', jp:'パーティーの2時間前(じかんまえ)、ピップというコビトが、大切(たいせつ)な質問(しつもん)をひとつした。'},
+      {en:'"{\u2026Um|アム / えっと}. Who is bringing the food?" 😶', jp:'「…えっと。食(た)べ物(もの)は、誰(だれ)が持(も)ってくるの？」'},
+      {en:'Everyone {became|ビケイム / 〜になった} quiet. Nobody had {brought|ブロート / 持(も)ってきた} any food at all!', jp:'みんな、静(しず)かになった。誰(だれ)も食(た)べ物(もの)を持(も)ってきていなかったのだ！'},
+      {en:'"{Emergency|エマージェンシー / 緊急事態(きんきゅうじたい)}!" someone shouted. "We need food right now!" 🚨', jp:'「緊急事態(きんきゅうじたい)！」誰(だれ)かが叫(さけ)んだ。「今(いま)すぐ食(た)べ物(もの)がいる！」'},
+      {en:'Just then, two {Heroes|ヒーローズ / ヒーローたち} — a girl and a boy — walked into the open space. Lumi walked in right behind them.', jp:'ちょうどそのとき、二人(ふたり)のヒーロー、女(おんな)の子(こ)と男(おとこ)の子(こ)が広(ひろ)いところに入(はい)ってきた。そのすぐ後(うし)ろに、ルミも。'},
+      {en:'"Please help us!" the Little People said. "We have a party, but no food!"', jp:'「助(たす)けてください！」コビトたちが言(い)った。「パーティーなのに、食(た)べ物(もの)がないんです！」'},
+      {en:"The three of them didn't wait. They spread out into the forest to look for food.", jp:'三人(さんにん)は待(ま)たなかった。食(た)べ物(もの)を探(さが)しに、森(もり)の中(なか)へ散(ち)らばった。'},
+      {en:'The girl Hero climbed a tree and found wild honey inside. Three angry bees chased her all the way down! "This one is {sweet|スイート / あまい}!" she said, holding up the honey.', jp:'女(おんな)の子(こ)のヒーローは木(き)に登(のぼ)って、野生(やせい)のハチミツを見(み)つけた。怒(おこ)った3匹(びき)のハチに、下(した)まで追(お)いかけられた！「これは甘(あま)い！」と、ハチミツを持(も)ち上(あ)げて言(い)った。'},
+      {en:'The boy Hero found small red apples by the river. He took one big bite — and his face turned very strange. "This one," he said slowly, "is {sour|サワー / すっぱい}."', jp:'男(おとこ)の子(こ)のヒーローは川(かわ)のそばで小(ちい)さな赤(あか)いリンゴを見(み)つけた。大(おお)きくひと口(くち)かじると、顔(かお)がとても変(へん)になった。「これは」と、ゆっくり言(い)った。「すっぱい。」'},
+      {en:'Lumi walked toward an old {cave|ケイヴ / 洞窟(どうくつ)} and found sparkling white {rocks|ロックス / 岩(いわ)} near the entrance. She touched one with her tongue. "Salty," she said, and coughed a little.', jp:'ルミは古(ふる)い洞窟(どうくつ)へ歩(ある)いていき、入口(いりぐち)の近(ちか)くでキラキラした白(しろ)い岩(いわ)を見(み)つけた。舌(した)でちょっと触(さわ)ってみた。「しょっぱい」と言(い)って、少(すこ)しむせた。'},
+      {en:'Just then, a little bat flew out of the cave — and the boy Hero jumped back with a yelp! But the bat only circled once, waved a tiny wing at Lumi like an old friend, and flew off into the trees. 🦇', jp:'そのとき、小(ちい)さなコウモリが洞窟(どうくつ)から飛(と)び出(だ)してきた。男(おとこ)の子(こ)のヒーローは「わっ！」と飛(と)びのいた！でもコウモリはくるっと一回(いっかい)まわって、まるで昔(むかし)からの友達(ともだち)みたいに、ルミに小(ちい)さな羽(はね)を振(ふ)って、木々(きぎ)の中(なか)へ飛(と)んでいった。'},
+      {en:'Lumi smiled and waved back. "Old friend of mine," she said. The boy Hero blinked. "\u2026You know that bat?!"', jp:'ルミは微笑(ほほえ)んで、手(て)を振(ふ)り返(かえ)した。「昔(むかし)の友達(ともだち)なの」と言(い)った。男(おとこ)の子(こ)は目(め)をぱちくり。「…あのコウモリと知(し)り合(あ)いなの？！」'},
+      {en:'"Oh — I almost forgot," Elder Bimble said. He reached into his pocket and pulled out a handful of extremely spicy red peppers. "I always carry these. Just in case."', jp:'「おお、忘(わす)れるところだった」とビンブル長老(ちょうろう)が言(い)った。ポケットに手(て)を入(い)れて、非常(ひじょう)に辛(から)い赤(あか)トウガラシをひとつかみ取(と)り出(だ)した。「いつも持(も)ち歩(ある)いておる。念(ねん)のためにな。」'},
+      {en:'Everyone stared at him. "\u2026Why?" Pip asked. Elder Bimble just smiled. 😶', jp:'みんなが長老(ちょうろう)を見(み)つめた。「…なんで？」とピップ。ビンブル長老(ちょうろう)は、ただ微笑(ほほえ)むだけだった。'},
+      {en:'Lumi looked at the honey, the apples, the salty rocks, and the spicy peppers. "Let\u2019s put it all together," she said, and mixed everything into a bowl. Then she cast one small spell.', jp:'ルミはハチミツ、リンゴ、しょっぱい岩(いわ)、辛(から)いトウガラシを見(み)た。「全部(ぜんぶ)合(あ)わせてみよう」と言(い)って、ボウルにすべてを混(ま)ぜた。そして、小(ちい)さな呪文(じゅもん)をひとつ唱(とな)えた。'},
+      {img:'lp_cake.jpg', en:'POOF! The bowl turned into a warm, golden {cake|ケイク / ケーキ}. It smelled sweet, sour, salty, and just a tiny bit spicy, all at once.', jp:'ポン！ボウルは温(あたた)かくて金色(きんいろ)のケーキに変(か)わった。甘(あま)くて、すっぱくて、しょっぱくて、ほんの少(すこ)しだけ辛(から)い香(かお)りが、いっぺんにした。'},
+      {en:'Elder Bimble took a bite. "\u2026That should NOT work," he said. Then his eyes went wide. "\u2026It\u2019s amazing."', jp:'ビンブル長老(ちょうろう)がひと口(くち)食(た)べた。「…こんなの、おいしいはずがない」と言(い)った。そして、目(め)を大(おお)きく見開(みひら)いた。「…すごくおいしい。」'},
+      {en:'Just then, a goblin walked into the open space. It looked up at the "PATY" banner\u2026 and quietly walked right back out. 😶', jp:'そのとき、ゴブリンが1匹(ぴき)、広(ひろ)いところに入(はい)ってきた。「PATY」の横断幕(おうだんまく)を見上(みあ)げて…静(しず)かに、そのまま出(で)て行(い)った。'},
+      {en:'Elder Bimble threw his arms in the air. "We {scared|スケアド / おびえさせた} away an enemy!" he shouted. "{Victory|ビクトリー / 勝利(しょうり)}!"', jp:'ビンブル長老(ちょうろう)は両手(りょうて)を高(たか)く上(あ)げた。「敵(てき)を追(お)い払(はら)ったぞ！」と叫(さけ)んだ。「勝利(しょうり)だ！」'},
+      {en:'The party was a big {success|サクセス / 成功(せいこう)} — until 8:00 PM. Then every single Little Person fell asleep at the exact same moment. 😴', jp:'パーティーは大成功(だいせいこう)だった。夜(よる)8時(じ)までは。その瞬間(しゅんかん)、コビトたちは一人(ひとり)残(のこ)らず、まったく同時(どうじ)に眠(ねむ)ってしまった。'},
+      {en:'Even heroes need rest. But Little People need it even more!', jp:'ヒーローだって休(やす)みは必要(ひつよう)。でも、コビトたちには、もっと必要(ひつよう)なのだ！'},
+    ]
+  }
+};
+
+/* ════════════ PICTURE BOOKS ════════════
+   See comment block above for the asset layout. page(1) doubles as the cover image.
+*/
+const PICBOOKS={
+  'lumi-lights':{
+    folder:'lumi-lights',pageCount:61,
+    flipFrom:5, /* from the 5–6 spread on, swap slots so each spread reads right-to-left: even page (text) on the left, odd page (illustration) on the right. Pages 1–4 and the final solo page stay as-is. */
+    soloPages:[4],  /* page 4 = dedication — always shown alone, never paired */
+    filePrefix:'page  (', /* TWO spaces — matches the original uploaded filenames */
+    emoji:'🎃',
+    titleEn:'Lumi Lights the Way',titleJp:'ルミがてらすみち',
+    subEn:"Little Lumi's very first story — made for Halloween! 🎃",
+    subJp:'小(ちい)さなルミの、はじめての絵本(えほん)。',
+    pdf:'lumi-lights-the-way.pdf',
+  },
+  'candy-cats':{
+    folder:'candy-cats',pageCount:21,
+    storyStart:4,   /* pages 1-3 are cover + front matter (no audio track) */
+    storyEnd:19,    /* pages 20-21 are back matter (no audio track) */
+    filePrefix:'page (', /* ONE space — matches your new uploaded filenames */
+    emoji:'🍬',
+    titleEn:'The Candy Cats of Candy Forest',titleJp:'キャンディーのもりのキャンディーキャットたち',
+    subEn:'Sweet NPC friends from a forest of candy! 🍬🐱',
+    subJp:'あまいお菓子(かし)の森(もり)のなかまたちの絵本(えほん)。',
+    pdf:null,
+  }
+};
+
+/* ── shelf cover images: preload, swap in on success, leave emoji fallback on failure ── */
+function setCoverImg(elId,src){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  const probe=new Image();
+  probe.onload=()=>{const img=document.createElement('img');img.src=src;img.alt='';el.textContent='';el.appendChild(img);};
+  probe.src=src;
+}
+setCoverImg('cover-prologue',ASSET+'covers/prologue.jpg');
+setCoverImg('cover-littlepeople',ASSET+'covers/littlepeople.jpg');
+setCoverImg('cover-lumi-lights',ASSET+'lumi-lights/'+encodeURIComponent('page  (1).JPG'));
+setCoverImg('cover-candy-cats',ASSET+'candy-cats/'+encodeURIComponent('page  (1).JPG'));
+
+(function(){
+  const $=id=>document.getElementById(id);
+  const book=$('book'),overlay=$('bk-overlay'),endPanel=$('bk-end');
+  const pageEl=$('book-page'),textEl=$('book-text'),counterEl=$('book-counter'),bar=$('bk-bar');
+  const jpBox=$('bk-jp-text'),jpBody=$('bk-jp-body'),glossEl=$('bk-gloss'),glossW=$('bk-gloss-w'),glossG=$('bk-gloss-g');
+  const prevBtn=$('bk-prev'),fwdBtn=$('bk-fwd'),jpBtn=$('bk-jp'),autoBtn=$('bk-auto'),fsBtn=$('bk-fs');
+  const readerTitle=$('reader-title'),ovTitle=$('ov-title'),ovSub=$('ov-sub'),ovEmoji=$('ov-emoji');
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let cur=STORIES.prologue,idx=0,jpOn=false,speed=1,auto=false,started=false;
+  let audio=null,autoTimer=null,muted=false;
+  const N=()=>cur.beats.length;
+  const pad=n=>String(n+1).padStart(2,'0');
+
+  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
+  window.stopBookAudio=stopAudio;
+
+  function buildText(){textEl.innerHTML=cur.beats.map((b,i)=>{const im=b.img?`<img class="beat-img" src="${ASSET}story-art/${b.img}" alt="" onerror="this.classList.add('hidden')">`:'';return `${im}<span class="sentence" data-i="${i}">${renderEN(b.en)}</span>`;}).join(' ');}
+  function centerActive(){
+    const el=textEl.querySelector('.sentence.active');if(!el)return;
+    const cR=pageEl.getBoundingClientRect(),eR=el.getBoundingClientRect();
+    const target=pageEl.scrollTop+(eR.top-cR.top)-(pageEl.clientHeight-eR.height)/2;
+    pageEl.scrollTo({top:Math.max(0,target),behavior:reduceMotion?'auto':'smooth'});
+  }
+  function autoDelay(text){const words=text.replace(/\{([^|}]+)\|[^}]*\}/g,'$1').split(/\s+/).length;return Math.max(2600,words*430)/speed;}
+  function armAuto(text){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),autoDelay(text));}
+  function playAudio(i){
+    stopAudio();
+    audio=new Audio(ASSET+'voice/'+cur.voiceId+'/'+cur.prefix+'_'+pad(i)+'.mp3');
+    audio.volume=muted?0:1;
+    audio.playbackRate=speed;
+    audio.onended=()=>{if(auto)advance();};
+    audio.onerror=()=>{audio=null;armAuto(cur.beats[i].en);};
+    audio.play().catch(()=>{audio=null;armAuto(cur.beats[i].en);});
+  }
+  function paint(){
+    textEl.querySelectorAll('.sentence').forEach((s,i)=>{s.classList.toggle('active',i===idx);s.classList.toggle('seen',i<idx);});
+    counterEl.textContent=(cur.prefix==='pro'?'PROLOGUE':'STORY')+' · '+(idx+1)+' / '+N();
+    bar.style.width=((idx+1)/N()*100)+'%';
+    jpBody.innerHTML=ruby(cur.beats[idx].jp);
+    jpBox.classList.toggle('show',jpOn);
+    glossEl.classList.remove('show');
+    prevBtn.classList.toggle('off',idx===0);
+    fwdBtn.classList.toggle('off',idx>=N()-1);
+  }
+  function setActive(i,play){idx=Math.max(0,Math.min(N()-1,i));paint();centerActive();if(started&&play!==false)playAudio(idx);}
+  function advance(){if(!started)return;if(idx>=N()-1){stopAudio();endPanel.classList.add('show');return;}setActive(idx+1);}
+  function back(){if(started&&idx>0)setActive(idx-1);}
+  function restart(){endPanel.classList.remove('show');overlay.classList.add('fade');started=true;buildText();setActive(0);pageEl.focus({preventScroll:true});}
+
+  function loadStory(key,autostart){
+    if(window.stopPicBookAudio)stopPicBookAudio();
+    book.style.display='';document.getElementById('pbook').style.display='none';
+    stopAudio();
+    cur=STORIES[key];idx=0;started=false;
+    ovEmoji.textContent=cur.emoji;
+    ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
+    ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
+    readerTitle.innerHTML=`${cur.emoji} ${cur.titleEn}<span class="jp">${ruby(cur.titleJp)}</span>`;
+    overlay.classList.remove('fade');endPanel.classList.remove('show');
+    buildText();paint();
+    document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.toggle('side-now',c.dataset.story===key));
+    document.querySelectorAll('.side-card[data-picbook]').forEach(c=>c.classList.remove('side-now'));
+    if(autostart)restart();
+  }
+  window.loadStory=loadStory;
+
+  /* page interactions */
+  pageEl.addEventListener('click',e=>{
+    if(!started)return;
+    const v=e.target.closest('.vocab');const s=e.target.closest('.sentence');const si=s?+s.dataset.i:-1;
+    if(v&&si===idx){e.stopPropagation();glossW.textContent=v.dataset.w;glossG.innerHTML=ruby(v.dataset.g);glossEl.classList.add('show');return;}
+    if(s&&si!==idx){glossEl.classList.remove('show');setActive(si);return;}
+    glossEl.classList.remove('show');advance();
+  });
+  pageEl.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
+
+  prevBtn.addEventListener('click',e=>{e.stopPropagation();glossEl.classList.remove('show');back();});
+  fwdBtn.addEventListener('click',e=>{e.stopPropagation();glossEl.classList.remove('show');advance();});
+
+  $('bk-start').addEventListener('click',restart);
+  $('bk-restart').addEventListener('click',e=>{e.stopPropagation();restart();});
+  $('bk-replay').addEventListener('click',restart);
+  $('bk-more').addEventListener('click',()=>{
+    if(document.fullscreenElement===book)document.exitFullscreen().catch(()=>{});
+    theaterOff();document.getElementById('story-shelf-main').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+  });
+
+  jpBtn.addEventListener('click',e=>{e.stopPropagation();jpOn=!jpOn;jpBtn.classList.toggle('on',jpOn);jpBtn.setAttribute('aria-pressed',String(jpOn));jpBox.classList.toggle('show',jpOn);});
+  autoBtn.addEventListener('click',e=>{
+    e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.setAttribute('aria-pressed',String(auto));autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
+    if(auto&&started){if(audio&&!audio.ended){audio.onended=()=>{if(auto)advance();};}else armAuto(cur.beats[idx].en);}else clearTimeout(autoTimer);
+  });
+  $('bk-mute').addEventListener('click',e=>{
+    e.stopPropagation();muted=!muted;
+    const b=$('bk-mute');b.classList.toggle('on',muted);b.textContent=muted?'🔇':'🔊';
+    if(audio)audio.volume=muted?0:1;
+  });
+  $('bk-replay-line').addEventListener('click',e=>{e.stopPropagation();if(started)playAudio(idx);});
+
+  book.querySelectorAll('.book-speed button').forEach(b=>{
+    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);book.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
+  });
+  /* story shelf cards (text reader) */
+  document.querySelectorAll('.side-card[data-story]').forEach(c=>{
+    const go=()=>{loadStory(c.dataset.story,true);book.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
+    c.addEventListener('click',go);
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+
+  /* fullscreen / theater */
+  function theaterOn(){book.classList.add('theater','big');document.body.classList.add('no-scroll');setTimeout(centerActive,60);}
+  function theaterOff(){book.classList.remove('theater','big');document.body.classList.remove('no-scroll');setTimeout(centerActive,60);}
+  function toggleFS(){
+    if(document.fullscreenElement===book)document.exitFullscreen().catch(()=>{});
+    else if(book.classList.contains('theater'))theaterOff();
+    else if(book.requestFullscreen)book.requestFullscreen().catch(theaterOn);
+    else theaterOn();
+  }
+  fsBtn.addEventListener('click',e=>{e.stopPropagation();toggleFS();});
+  document.addEventListener('fullscreenchange',()=>{const on=document.fullscreenElement===book||book.classList.contains('theater');book.classList.toggle('big',on);setTimeout(centerActive,60);});
+  document.addEventListener('keydown',e=>{
+    if(!started||book.style.display==='none')return;
+    const fs=document.fullscreenElement===book||book.classList.contains('theater');
+    if(!fs&&!book.contains(document.activeElement))return;
+    if(e.key==='ArrowRight'){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back();}
+    else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
+    else if(e.key==='Escape'&&book.classList.contains('theater'))theaterOff();
+  });
+
+  loadStory('prologue',false);
+})();
+
+/* ════════════ PICTURE BOOK ENGINE (image pages + optional one-track narration) ════════════ */
+(function(){
+  const $=id=>document.getElementById(id);
+  const pbookEl=$('pbook'),overlay=$('pbk-overlay'),endPanel=$('pbk-end');
+  const stage=$('pbk-stage');
+  const leftSlot=$('pbk-left'),rightSlot=$('pbk-right'),spineEl=$('pbk-spine');
+  const leftImg=$('pbk-img-left'),rightImg=$('pbk-img-right');
+  const counterEl=$('pbk-counter'),bar=$('pbk-bar');
+  const prevBtn=$('pbk-prev'),fwdBtn=$('pbk-fwd'),muteBtn=$('pbk-mute'),replayBtn=$('pbk-replay'),autoBtn=$('pbk-auto'),viewBtn=$('pbk-view'),fsBtn=$('pbk-fs');
+  const coverImg=$('pbk-cover-img'),ovEmoji=$('pbk-ov-emoji'),ovTitle=$('pbk-ov-title'),ovSub=$('pbk-ov-sub'),pdfLink=$('pbk-pdf-link');
+  const readerTitle=$('reader-title');
+  const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const FALLBACK_MS=3200;
+
+  /* spreadMode: true=spread (2 pages); false=single (1 page). Responsive default. */
+  let spreadMode=(window.innerWidth>=700);
+  let cur=null,curSpreads=[],spreadIdx=0,singlePageIdx=1,speed=1,auto=false,started=false,muted=false;
+  let audio=null,autoTimer=null;
+
+  /* ── paths ──
+     IMAGES: assets/{folder}/page  (N).JPG  ← two spaces before the parenthesis
+     AUDIO:  assets/voice/{folder}/spread_NN.mp3
+       • One recording per text+illustration spread, numbered from 01.
+       • soloPages (cover, dedication) have audioTrack=0 = no recording needed.
+       • storyStart/storyEnd: pages outside this range are front/back matter — shown normally
+         but audioTrack=0, so the track counter only counts story spreads.
+       • Missing files fail silently; auto-advance timer fires after FALLBACK_MS instead.
+  */
+  function pagePath(i){
+    /* filePrefix: the per-book filename pattern before the page number.
+       Lumi Lights: 'page  (' (two spaces — existing uploaded files keep their names)
+       Candy Cats:  'page ('  (one space — use when batch-renaming the new export) */
+    const prefix=cur.filePrefix||'page  (';
+    return ASSET+cur.folder+'/'+encodeURIComponent(prefix+(i+1)+').JPG');
+  }
+  function voicePath(track){const n=String(track).padStart(2,'0');return ASSET+'voice/'+cur.folder+'/spread_'+n+'.mp3';}
+
+  /* ── buildSpreads ──
+     Constructs the ordered list of spreads for the current book.
+     soloPages:  page numbers always shown alone (centered), e.g. dedications.
+     storyStart: first page that belongs to story content (gets an audio track number).
+                 Pages before storyStart are front matter — shown as normal spreads but
+                 audioTrack=0 so the track counter starts at the right place.
+     storyEnd:   last story page. Pages after storyEnd are back matter — also audioTrack=0.
+                 Defaults to pageCount if omitted.
+     audioTrack 0 = no narration (cover / solo / front+back matter).
+     audioTrack 1,2,3... = spread_01.mp3, spread_02.mp3 … (consecutive, no gaps).
+  */
+  function buildSpreads(book){
+    const solos=new Set(book.soloPages||[]);
+    const storyStart=book.storyStart||2;
+    const storyEnd=book.storyEnd||book.pageCount;
+    const flipFrom=book.flipFrom||Infinity; /* interior spreads with lower page >= flipFrom render right-to-left */
+    /* left/right = logical page numbers (kept ascending for the counter + audio);
+       dispLeft/dispRight = which page image actually goes in each slot (flipped when needed). */
+    const out=[{left:null,right:1,dispLeft:null,dispRight:1,solo:true,audioTrack:0}]; // cover always solo
+    let p=2,track=1;
+    while(p<=book.pageCount){
+      if(solos.has(p)){
+        out.push({left:null,right:p,dispLeft:null,dispRight:p,solo:true,audioTrack:0});
+        p++;
+      } else {
+        const r=(p+1<=book.pageCount)?p+1:null;
+        const isStory=(p>=storyStart&&p<=storyEnd);
+        const flip=(r&&p>=flipFrom); /* only full two-page spreads flip; a lone final page never does */
+        out.push({left:p,right:r,dispLeft:flip?r:p,dispRight:flip?p:r,solo:false,audioTrack:isStory?track++:0});
+        p+=2;
+      }
+    }
+    return out;
+  }
+
+  function setSlot(slot,imgEl,pageNum){
+    if(!pageNum){slot.classList.add('hidden');return;}
+    slot.classList.remove('hidden');imgEl.src=pagePath(pageNum-1);imgEl.alt='Page '+pageNum;
+  }
+  function stopAudio(){if(audio){audio.pause();audio.onended=null;audio=null;}clearTimeout(autoTimer);}
+  window.stopPicBookAudio=stopAudio;
+  function armAuto(ms){clearTimeout(autoTimer);if(auto)autoTimer=setTimeout(()=>advance(),ms/speed);}
+  /* track 0 = no audio (cover/solo) — arm auto timer only. 1+ = play spread_NN.mp3 */
+  function playNarration(track){
+    if(!track){if(auto)armAuto(FALLBACK_MS);return;}
+    stopAudio();
+    audio=new Audio(voicePath(track));audio.volume=muted?0:1;audio.playbackRate=speed;
+    audio.onended=()=>{if(auto)advance();};
+    audio.onerror=()=>{audio=null;if(auto)armAuto(FALLBACK_MS);};
+    audio.play().catch(()=>{audio=null;if(auto)armAuto(FALLBACK_MS);});
+  }
+
+  /* ── spread mode ── */
+  function showPage(s,autoplay){
+    spreadIdx=Math.max(0,Math.min(curSpreads.length-1,s));
+    const sp=curSpreads[spreadIdx];
+    setSlot(leftSlot,leftImg,sp.dispLeft);setSlot(rightSlot,rightImg,sp.dispRight);
+    spineEl.style.display=(sp.left&&sp.right)?'':'none';
+    const nums=[sp.left,sp.right].filter(Boolean);
+    counterEl.textContent=spreadIdx===0?'COVER':
+      sp.solo?'PAGE '+nums[0]+' / '+cur.pageCount:
+      'PAGES '+nums.join('-')+' / '+cur.pageCount;
+    bar.style.width=((spreadIdx+1)/curSpreads.length*100)+'%';
+    prevBtn.classList.toggle('off',spreadIdx===0);
+    fwdBtn.classList.toggle('off',spreadIdx>=curSpreads.length-1);
+    if(started&&autoplay!==false)playNarration(sp.audioTrack);
+  }
+
+  /* ── single page mode ──
+     Narrates when on the LEFT (first/lower) page of a spread; silent on right (illustration).
+     Solo pages have audioTrack 0 so they auto-pause then advance. */
+  function showSinglePage(p,autoplay){
+    singlePageIdx=Math.max(1,Math.min(cur.pageCount,p));
+    leftSlot.classList.add('hidden');spineEl.style.display='none';
+    rightSlot.classList.remove('hidden');
+    rightImg.src=pagePath(singlePageIdx-1);rightImg.alt='Page '+singlePageIdx;
+    counterEl.textContent=(singlePageIdx===1?'COVER':'PAGE '+singlePageIdx)+' / '+cur.pageCount;
+    bar.style.width=(singlePageIdx/cur.pageCount*100)+'%';
+    prevBtn.classList.toggle('off',singlePageIdx===1);
+    fwdBtn.classList.toggle('off',singlePageIdx>=cur.pageCount);
+    const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);
+    const sp=si>=0?curSpreads[si]:null;
+    const track=(sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0;
+    if(started&&autoplay!==false)playNarration(track);
+  }
+
+  function advance(){
+    if(!started)return;
+    if(spreadMode){
+      if(spreadIdx>=curSpreads.length-1){stopAudio();endPanel.classList.add('show');return;}
+      showPage(spreadIdx+1);
+    } else {
+      if(singlePageIdx>=cur.pageCount){stopAudio();endPanel.classList.add('show');return;}
+      showSinglePage(singlePageIdx+1);
+    }
+  }
+  function back(){
+    if(!started)return;
+    if(spreadMode){if(spreadIdx>0)showPage(spreadIdx-1);}
+    else{if(singlePageIdx>1)showSinglePage(singlePageIdx-1);}
+  }
+  function restart(){
+    endPanel.classList.remove('show');overlay.classList.add('fade');started=true;
+    if(spreadMode)showPage(0);else showSinglePage(1);
+    stage.focus({preventScroll:true});
+  }
+
+  function setOverlayCover(src,emoji){
+    const probe=new Image();
+    probe.onload=()=>{coverImg.src=src;coverImg.style.display='';ovEmoji.style.display='none';};
+    probe.onerror=()=>{coverImg.style.display='none';ovEmoji.style.display='';ovEmoji.textContent=emoji;};
+    probe.src=src;
+  }
+
+  function loadPicBook(key,autostart){
+    stopAudio();if(window.stopBookAudio)stopBookAudio();
+    document.getElementById('book').style.display='none';pbookEl.style.display='';
+    cur=PICBOOKS[key];curSpreads=buildSpreads(cur);spreadIdx=0;singlePageIdx=1;started=false;
+    setOverlayCover(pagePath(0),cur.emoji);
+    ovTitle.innerHTML=`${cur.titleEn}<br>${ruby(cur.titleJp)}`;
+    ovSub.innerHTML=`${cur.subEn}<br>${ruby(cur.subJp)}`;
+    readerTitle.innerHTML=`${cur.emoji} ${cur.titleEn}<span class="jp">${ruby(cur.titleJp)}</span>`;
+    if(cur.pdf){pdfLink.href=ASSET+cur.pdf;pdfLink.style.display='';}else{pdfLink.style.display='none';}
+    overlay.classList.remove('fade');endPanel.classList.remove('show');
+    if(spreadMode)showPage(0,false);else showSinglePage(1,false);
+    document.querySelectorAll('.side-card[data-story]').forEach(c=>c.classList.remove('side-now'));
+    document.querySelectorAll('.side-card[data-picbook]').forEach(c=>c.classList.toggle('side-now',c.dataset.picbook===key));
+    if(autostart)restart();
+  }
+  window.loadPicBook=loadPicBook;
+
+  /* spread navigation: click left page = back, click right page = forward */
+  leftSlot.addEventListener('click',e=>{e.stopPropagation();if(spreadMode&&started)back();});
+  rightSlot.addEventListener('click',e=>{e.stopPropagation();if(spreadMode&&started)advance();});
+
+  /* page navigation in spread mode: left page = back, right page = forward */
+  leftSlot.addEventListener('click',()=>{if(!started||!spreadMode)return;back();});
+  rightSlot.addEventListener('click',()=>{if(!started)return;if(spreadMode)advance();else advance();});
+  /* single page or stage: tap anywhere to advance */
+  stage.addEventListener('click',()=>{if(!started)return;if(!spreadMode)advance();});
+  stage.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();advance();}});
+  prevBtn.addEventListener('click',e=>{e.stopPropagation();back();});
+  fwdBtn.addEventListener('click',e=>{e.stopPropagation();advance();});
+  $('pbk-start').addEventListener('click',restart);
+  $('pbk-restart').addEventListener('click',e=>{e.stopPropagation();restart();});
+  $('pbk-replay').addEventListener('click',restart);
+  $('pbk-more').addEventListener('click',()=>{
+    if(document.fullscreenElement===pbookEl)document.exitFullscreen().catch(()=>{});
+    theaterOff();document.getElementById('story-shelf-gaiden').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'center'});
+  });
+
+  replayBtn.addEventListener('click',e=>{
+    e.stopPropagation();if(!started)return;
+    if(spreadMode){playNarration(curSpreads[spreadIdx].audioTrack);}
+    else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;playNarration((sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0);}
+  });
+  muteBtn.addEventListener('click',e=>{
+    e.stopPropagation();muted=!muted;
+    muteBtn.classList.toggle('on',muted);muteBtn.textContent=muted?'🔇 Unmute':'🔊 Mute';
+    if(audio)audio.volume=muted?0:1;
+  });
+  autoBtn.addEventListener('click',e=>{
+    e.stopPropagation();auto=!auto;autoBtn.classList.toggle('on',auto);autoBtn.textContent=auto?'⏸ Auto':'▶ Auto';
+    if(auto&&started){
+      let track=0;
+      if(spreadMode){track=curSpreads[spreadIdx].audioTrack;}
+      else{const si=curSpreads.findIndex(sp=>sp.left===singlePageIdx||sp.right===singlePageIdx);const sp=si>=0?curSpreads[si]:null;track=(sp&&!sp.solo&&sp.left===singlePageIdx)?sp.audioTrack:0;}
+      if(!audio||audio.ended)playNarration(track);else audio.onended=()=>{if(auto)advance();};
+    } else clearTimeout(autoTimer);
+  });
+  viewBtn.addEventListener('click',e=>{
+    e.stopPropagation();spreadMode=!spreadMode;
+    viewBtn.textContent=spreadMode?'📄 Single':'📖 Spread';
+    viewBtn.title=spreadMode?'Single page view / 1ページ表示':'Spread view / 見開き表示';
+    if(started){if(spreadMode)showPage(spreadIdx,false);else showSinglePage(singlePageIdx,false);}
+  });
+  pbookEl.querySelectorAll('.book-speed button').forEach(b=>{
+    b.addEventListener('click',e=>{e.stopPropagation();speed=parseFloat(b.dataset.rate);pbookEl.querySelectorAll('.book-speed button').forEach(x=>x.classList.toggle('active',x===b));if(audio)audio.playbackRate=speed;});
+  });
+
+  document.querySelectorAll('.side-card[data-picbook]').forEach(c=>{
+    const go=()=>{loadPicBook(c.dataset.picbook,true);pbookEl.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});};
+    c.addEventListener('click',go);
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}});
+  });
+
+  function theaterOn(){pbookEl.classList.add('theater','big');document.body.classList.add('no-scroll');}
+  function theaterOff(){pbookEl.classList.remove('theater','big');document.body.classList.remove('no-scroll');}
+  function toggleFS(){
+    if(document.fullscreenElement===pbookEl)document.exitFullscreen().catch(()=>{});
+    else if(pbookEl.classList.contains('theater'))theaterOff();
+    else if(pbookEl.requestFullscreen)pbookEl.requestFullscreen().catch(theaterOn);
+    else theaterOn();
+  }
+  fsBtn.addEventListener('click',e=>{e.stopPropagation();toggleFS();});
+  document.addEventListener('fullscreenchange',()=>{const on=document.fullscreenElement===pbookEl||pbookEl.classList.contains('theater');pbookEl.classList.toggle('big',on);});
+  document.addEventListener('keydown',e=>{
+    if(!started||pbookEl.style.display==='none')return;
+    const fs=document.fullscreenElement===pbookEl||pbookEl.classList.contains('theater');
+    if(!fs&&!pbookEl.contains(document.activeElement))return;
+    if(e.key==='ArrowRight'){e.preventDefault();advance();}
+    else if(e.key==='ArrowLeft'){e.preventDefault();back();}
+    else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFS();}
+    else if(e.key==='Escape'&&pbookEl.classList.contains('theater'))theaterOff();
+  });
+  viewBtn.textContent=spreadMode?'📄 Single':'📖 Spread';
+  viewBtn.title=spreadMode?'Single page view / 1ページ表示':'Spread view / 見開き表示';
+})();
+
+/* ════════════ VOCAB LIST ════════════ */
+const VOCAB=[
+  ['mage','メイジ','魔法使(まほうつか)い'],['magic','マジック','魔法(まほう)'],['world','ワールド','世界(せかい)'],
+  ['hero','ヒーロー','英雄(えいゆう)'],['guardian','ガーディアン','守護者(しゅごしゃ)'],['crystal','クリスタル','水晶(すいしょう)'],
+  ['Advanced','アドバンスト','上級(じょうきゅう)の'],['crack','クラック','ひび・裂(さ)け目(め)'],['alone','アローン','ひとりで'],
+  ['anyway','エニウェイ','とにかく'],['signal','シグナル','信号(しんごう)'],['anchor','アンカー','錨(いかり)'],['reckless','レックレス','無謀(むぼう)な'],
+];
+(function(){
+  const g=document.getElementById('vocab-grid');
+  VOCAB.forEach(([en,kana,ja])=>{const d=document.createElement('div');d.className='vchip';d.innerHTML=`<div class="en">${en}</div><div class="kana">${kana}</div><div class="ja">${ja}</div>`;g.appendChild(d);});
+})();
+
+/* ════════════ RECIPE MODAL (Little People's Party Cake) ════════════ */
+(function(){
+  const modal=document.getElementById('recipe-modal');
+  if(!modal)return;
+  const closeBtn=document.getElementById('recipe-close');
+  let lastFocus=null;
+  function hushAudio(){try{if(window.stopBookAudio)window.stopBookAudio();}catch(e){}try{if(window.stopPicBookAudio)window.stopPicBookAudio();}catch(e){}}
+  function openModal(){
+    lastFocus=document.activeElement;
+    hushAudio();
+    modal.classList.add('show');
+    document.body.classList.add('no-scroll');
+    modal.scrollTop=0;
+    closeBtn.focus({preventScroll:true});
+  }
+  function closeModal(){
+    modal.classList.remove('show');
+    document.body.classList.remove('no-scroll');
+    if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true});
+  }
+  document.querySelectorAll('.side-card[data-recipe]').forEach(c=>{
+    c.addEventListener('click',openModal);
+    c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openModal();}});
+  });
+  closeBtn.addEventListener('click',closeModal);
+  modal.addEventListener('click',e=>{if(e.target===modal)closeModal();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('show'))closeModal();});
+})();
+
+/* ════════════ Turn ALL 漢字(かな) into furigana (small, above) ════════════ */
+rubifyTree(document.querySelector('.page'));
+</script>
+</body>
+</html>
